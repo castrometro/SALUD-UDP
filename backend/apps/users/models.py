@@ -56,6 +56,15 @@ class User(AbstractBaseUser, PermissionsMixin):
         verbose_name = "Usuario"
         verbose_name_plural = "Usuarios"
 
+    def get_full_name(self):
+        """Retorna el nombre completo del usuario"""
+        full_name = f"{self.first_name} {self.last_name}".strip()
+        return full_name if full_name else self.email
+
+    def get_short_name(self):
+        """Retorna el primer nombre del usuario"""
+        return self.first_name or self.email
+
     def save(self, *args, **kwargs):
         if self.rut:
             self.rut = format_rut(self.rut)

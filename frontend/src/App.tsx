@@ -10,6 +10,7 @@ import PacienteFormPage from './features/pacientes/pages/PacienteFormPage';
 import PacienteDetailPage from './features/pacientes/pages/PacienteDetailPage';
 import FichaListPage from './features/fichas/pages/FichaListPage';
 import FichaFormPage from './features/fichas/pages/FichaFormPage';
+import FichaDetailPage from './features/fichas/pages/FichaDetailPage';
 import EstudianteListPage from './features/estudiantes/pages/EstudianteListPage';
 
 const PrivateRoute = ({ children }: { children: JSX.Element }) => {
@@ -55,6 +56,7 @@ function App() {
                         {/* Fichas */}
                         <Route path="fichas" element={<FichaListPage />} />
                         <Route path="fichas/nueva" element={<FichaFormPage />} />
+                        <Route path="fichas/:id" element={<FichaDetailPage />} />
                         <Route path="fichas/:id/editar" element={<FichaFormPage />} />
 
                         {/* Estudiantes */}

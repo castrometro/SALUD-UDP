@@ -1,16 +1,24 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { FichaAmbulatoria } from '../types';
 import { createFicha, getFicha, updateFicha } from '../services/fichaService';
 import PacienteSelect from '../components/PacienteSelect';
+import { useAuth } from '../../auth/context/AuthContext';
 
 const FichaFormPage = () => {
     const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
+    const [searchParams] = useSearchParams();
+    const { user } = useAuth();
     const isEdit = !!id;
+    const isDocente = user?.role === 'ADMIN' || user?.role === 'DOCENTE';
+
+    // Obtener paciente de la URL si viene como query param
+    const pacienteIdFromUrl = searchParams.get('paciente');
 
     const [formData, setFormData] = useState<Partial<FichaAmbulatoria>>({
-        paciente: undefined,
+        paciente: pacienteIdFromUrl ? parseInt(pacienteIdFromUrl) : undefined,
+        es_plantilla: isDocente, // Docentes crean plantillas por defecto
         motivo_consulta: '',
         anamnesis: '',
         examen_fisico: '',
@@ -26,6 +34,13 @@ const FichaFormPage = () => {
             loadFicha(Number(id));
         }
     }, [isEdit, id]);
+
+    // Actualizar paciente si cambia en la URL
+    useEffect(() => {
+        if (pacienteIdFromUrl && !isEdit) {
+            setFormData(prev => ({ ...prev, paciente: parseInt(pacienteIdFromUrl) }));
+        }
+    }, [pacienteIdFromUrl, isEdit]);
 
     const loadFicha = async (id: number) => {
         try {
@@ -46,10 +61,11 @@ const FichaFormPage = () => {
         try {
             if (isEdit && id) {
                 await updateFicha(Number(id), formData);
+                navigate(`/fichas/${id}`);
             } else {
-                await createFicha(formData);
+                const nuevaFicha = await createFicha(formData);
+                navigate(`/fichas/${nuevaFicha.id}`);
             }
-            navigate('/fichas');
         } catch (error) {
             console.error('Error saving ficha', error);
             alert('Error al guardar la ficha');
@@ -58,9 +74,19 @@ const FichaFormPage = () => {
 
     return (
         <div className="max-w-4xl mx-auto">
-            <h1 className="text-2xl font-semibold text-gray-900 mb-6">
-                {isEdit ? 'Editar Ficha' : 'Nueva Ficha'}
+            <h1 className="text-2xl font-semibold text-gray-900 mb-2">
+                {isEdit ? 'Editar Ficha' : (isDocente ? 'Crear Caso Clínico (Ficha Base)' : 'Nueva Ficha')}
             </h1>
+            
+            {/* Nota informativa para docentes */}
+            {!isEdit && isDocente && (
+                <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                    <p className="text-purple-800 font-worksans text-sm">
+                        <strong>📋 Ficha Base:</strong> Esta ficha servirá como caso clínico inicial. 
+                        Los estudiantes podrán crear sus propias copias para trabajar de forma independiente.
+                    </p>
+                </div>
+            )}
             
             <form onSubmit={handleSubmit} className="bg-white shadow sm:rounded-lg p-6 space-y-6">
                 
@@ -69,22 +95,24 @@ const FichaFormPage = () => {
                     <PacienteSelect
                         value={formData.paciente}
                         onChange={(id) => setFormData(prev => ({ ...prev, paciente: id }))}
-                        disabled={isEdit}
+                        disabled={isEdit || !!pacienteIdFromUrl}
                     />
                 </div>
 
+                {/* 1. Factores */}
                 <div>
-                    <label htmlFor="motivo_consulta" className="block text-sm font-medium text-gray-700">Motivo de Consulta</label>
+                    <label htmlFor="factores" className="block text-sm font-medium text-gray-700">Factores</label>
                     <textarea
-                        name="motivo_consulta"
-                        id="motivo_consulta"
+                        name="factores"
+                        id="factores"
                         rows={3}
-                        value={formData.motivo_consulta}
+                        value={formData.factores}
                         onChange={handleChange}
                         className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                     />
                 </div>
 
+                {/* 2. Anamnesis */}
                 <div>
                     <label htmlFor="anamnesis" className="block text-sm font-medium text-gray-700">Anamnesis</label>
                     <textarea
@@ -97,6 +125,33 @@ const FichaFormPage = () => {
                     />
                 </div>
 
+                {/* 3. Motivo de Consulta */}
+                <div>
+                    <label htmlFor="motivo_consulta" className="block text-sm font-medium text-gray-700">Motivo de Consulta</label>
+                    <textarea
+                        name="motivo_consulta"
+                        id="motivo_consulta"
+                        rows={3}
+                        value={formData.motivo_consulta}
+                        onChange={handleChange}
+                        className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                </div>
+
+                {/* 4. RAU Necesidades */}
+                <div>
+                    <label htmlFor="rau_necesidades" className="block text-sm font-medium text-gray-700">RAU Necesidades</label>
+                    <textarea
+                        name="rau_necesidades"
+                        id="rau_necesidades"
+                        rows={3}
+                        value={formData.rau_necesidades}
+                        onChange={handleChange}
+                        className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                </div>
+
+                {/* 5. Examen Físico */}
                 <div>
                     <label htmlFor="examen_fisico" className="block text-sm font-medium text-gray-700">Examen Físico</label>
                     <textarea
@@ -109,6 +164,20 @@ const FichaFormPage = () => {
                     />
                 </div>
 
+                {/* 6. Instrumentos Aplicados */}
+                <div>
+                    <label htmlFor="instrumentos_aplicados" className="block text-sm font-medium text-gray-700">Instrumentos Aplicados</label>
+                    <textarea
+                        name="instrumentos_aplicados"
+                        id="instrumentos_aplicados"
+                        rows={3}
+                        value={formData.instrumentos_aplicados}
+                        onChange={handleChange}
+                        className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                    />
+                </div>
+
+                {/* 7. Diagnóstico */}
                 <div>
                     <label htmlFor="diagnostico" className="block text-sm font-medium text-gray-700">Diagnóstico</label>
                     <textarea
@@ -121,6 +190,7 @@ const FichaFormPage = () => {
                     />
                 </div>
 
+                {/* 8. Intervenciones */}
                 <div>
                     <label htmlFor="intervenciones" className="block text-sm font-medium text-gray-700">Intervenciones</label>
                     <textarea
