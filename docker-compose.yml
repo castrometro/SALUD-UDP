@@ -1,0 +1,76 @@
+version: '3.8'
+
+services:
+  # --- Base de Datos (Aislada de Producción) ---
+  db:
+    image: mysql:8.0
+    container_name: clinica_dev_db
+    restart: always
+    environment:
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - clinica_net
+
+  # --- Backend (Django Monolito Modular) ---
+  backend:
+    build: ./backend
+    container_name: clinica_dev_backend
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ./backend:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DEBUG=${DJANGO_DEBUG}
+      - SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DB_NAME=${MYSQL_DATABASE}
+      - DB_USER=${MYSQL_USER}
+      - DB_PASSWORD=${MYSQL_PASSWORD}
+      - DB_HOST=${DB_HOST}
+    networks:
+      - clinica_net
+
+  # --- Frontend (Vite + React) ---
+  frontend:
+    build: ./frontend
+    container_name: clinica_dev_frontend
+    # En desarrollo, usamos 'npm run dev' con host expuesto
+    command: npm run dev -- --host
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    ports:
+      - "3000:3000" # Vite default
+      - "5173:5173" # Vite HMR
+    environment:
+      - VITE_API_URL=${VITE_API_URL}
+    networks:
+      - clinica_net
+
+  # --- Reverse Proxy (Nginx) ---
+  nginx:
+    image: nginx:alpine
+    container_name: clinica_dev_nginx
+    ports:
+      - "8080:80" # Accederemos por http://tu-ip:8080
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - clinica_net
+
+networks:
+  clinica_net:
+    driver: bridge
+
+volumes:
+  db_data:
