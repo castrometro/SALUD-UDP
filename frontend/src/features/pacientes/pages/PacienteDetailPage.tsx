@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { 
-    User, Phone, Mail, MapPin, Calendar, Activity, 
-    FileText, Plus, Clock, ChevronLeft 
+import {
+    User, Phone, Mail, MapPin, Calendar, Activity,
+    FileText, Plus, Clock, ChevronLeft
 } from 'lucide-react';
 import { formatRut } from '../../../utils/rut';
 import { Paciente } from '../types';
@@ -53,7 +53,7 @@ const PacienteDetailPage = () => {
             </div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                
+
                 {/* Header / Patient Profile Card */}
                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
                     <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -69,11 +69,10 @@ const PacienteDetailPage = () => {
                                     <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-sm font-semibold font-worksans">
                                         {formatRut(paciente.rut)}
                                     </span>
-                                    <span className={`px-3 py-1 rounded-full text-sm font-semibold font-worksans ${
-                                        paciente.prevision === 'FONASA' ? 'bg-green-100 text-green-800' : 
-                                        paciente.prevision === 'ISAPRE' ? 'bg-purple-100 text-purple-800' : 
-                                        'bg-yellow-100 text-yellow-800'
-                                    }`}>
+                                    <span className={`px-3 py-1 rounded-full text-sm font-semibold font-worksans ${paciente.prevision === 'FONASA' ? 'bg-green-100 text-green-800' :
+                                        paciente.prevision === 'ISAPRE' ? 'bg-purple-100 text-purple-800' :
+                                            'bg-yellow-100 text-yellow-800'
+                                        }`}>
                                         {paciente.prevision}
                                     </span>
                                 </div>
@@ -83,7 +82,7 @@ const PacienteDetailPage = () => {
                             <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors font-worksans">
                                 Editar Perfil
                             </button>
-                            <Link 
+                            <Link
                                 to={`/fichas/nueva?paciente=${paciente.id}`}
                                 className="px-4 py-2 bg-aqua text-white rounded-lg font-medium hover:bg-blue-600 transition-colors shadow-sm flex items-center gap-2 font-worksans"
                             >
@@ -133,44 +132,131 @@ const PacienteDetailPage = () => {
                     </h2>
                 </div>
 
-                <div className="space-y-4">
-                    {fichas.map((ficha) => (
-                        <div key={ficha.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
-                            <div className="flex flex-col md:flex-row justify-between gap-4">
-                                <div className="flex-1">
-                                    <div className="flex items-center gap-3 mb-2">
-                                        <span className="px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-bold font-worksans uppercase tracking-wide">
-                                            Ficha #{ficha.id}
-                                        </span>
-                                        <span className="flex items-center text-sm text-gray-500 font-worksans">
-                                            <Clock className="w-4 h-4 mr-1" />
-                                            {new Date(ficha.fecha_creacion || '').toLocaleDateString()} - {new Date(ficha.fecha_creacion || '').toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                                        </span>
+                <div className="space-y-6">
+                    {(() => {
+                        // Agrupar fichas por caso base
+                        const bases = fichas.filter(f => f.es_plantilla);
+                        const sinBase = fichas.filter(f => !f.es_plantilla && !f.ficha_base);
+
+                        return (
+                            <>
+                                {bases.map((baseFicha) => {
+                                    const copiasAlumnos = fichas.filter(f => f.ficha_base === baseFicha.id);
+
+                                    return (
+                                        <div key={baseFicha.id} className="space-y-3">
+                                            {/* Tarjeta de Caso Base (Docente) */}
+                                            <div className="bg-white rounded-xl p-6 shadow-sm border-l-4 border-l-purple-500 border-gray-100 hover:shadow-md transition-shadow duration-200">
+                                                <div className="flex flex-col md:flex-row justify-between gap-4">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <span className="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs font-bold font-worksans uppercase tracking-wide">
+                                                                Caso Clínico (Docente)
+                                                            </span>
+                                                            <span className="flex items-center text-sm text-gray-500 font-worksans">
+                                                                <Clock className="w-4 h-4 mr-1" />
+                                                                {new Date(baseFicha.fecha_modificacion || baseFicha.fecha_creacion || '').toLocaleDateString()} - {new Date(baseFicha.fecha_modificacion || baseFicha.fecha_creacion || '').toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                            </span>
+                                                        </div>
+                                                        <h3 className="text-lg font-bold text-gray-900 font-arizona mb-1">
+                                                            {baseFicha.motivo_consulta}
+                                                        </h3>
+                                                        <p className="text-gray-600 font-worksans text-sm line-clamp-2">
+                                                            Diagnóstico Base: <span className="font-medium text-gray-900">{baseFicha.diagnostico}</span>
+                                                        </p>
+                                                    </div>
+
+                                                    <div className="flex items-center gap-4 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6">
+                                                        <div className="text-right hidden md:block">
+                                                            <p className="text-xs text-gray-500 font-worksans">Autor del Caso</p>
+                                                            <p className="text-sm font-medium text-gray-900 font-worksans">{baseFicha.creado_por_nombre}</p>
+                                                        </div>
+                                                        <Link
+                                                            to={`/fichas/${baseFicha.id}`}
+                                                            className="p-2 text-gray-400 hover:text-aqua hover:bg-aqua/5 rounded-full transition-colors"
+                                                            title="Ver detalle del caso"
+                                                        >
+                                                            <FileText className="w-6 h-6" />
+                                                        </Link>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Sub-lista de Copias de Alumnos */}
+                                            {copiasAlumnos.length > 0 && (
+                                                <div className="pl-8 border-l-2 border-gray-200 ml-6 space-y-3">
+                                                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider font-worksans mb-2">
+                                                        Trabajos de Estudiantes ({copiasAlumnos.length})
+                                                    </p>
+                                                    {copiasAlumnos.map((fichaAlumno) => (
+                                                        <div key={fichaAlumno.id} className="bg-white/60 rounded-lg p-4 shadow-sm border border-gray-100 hover:bg-white hover:shadow-md transition-all duration-200">
+                                                            <div className="flex justify-between items-center">
+                                                                <div className="flex-1">
+                                                                    <div className="flex items-center gap-3">
+                                                                        <span className="px-2.5 py-0.5 rounded-full bg-green-100 text-green-700 text-xs font-bold font-worksans uppercase tracking-wide">
+                                                                            Alumno
+                                                                        </span>
+                                                                        <p className="text-sm font-medium text-gray-900 font-worksans">
+                                                                            {fichaAlumno.estudiante_nombre || fichaAlumno.creado_por_nombre}
+                                                                        </p>
+                                                                        <span className="text-xs text-gray-400 font-worksans flex items-center">
+                                                                            <Clock className="w-3 h-3 mr-1" />
+                                                                            {new Date(fichaAlumno.fecha_modificacion || fichaAlumno.fecha_creacion || '').toLocaleDateString()}
+                                                                        </span>
+                                                                    </div>
+                                                                </div>
+                                                                <Link
+                                                                    to={`/fichas/${fichaAlumno.id}`}
+                                                                    className="text-gray-400 hover:text-aqua p-1 rounded-full hover:bg-aqua/5 transition-colors"
+                                                                    title="Ver ficha de estudiante"
+                                                                >
+                                                                    <FileText className="w-5 h-5" />
+                                                                </Link>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+
+                                {sinBase.length > 0 && (
+                                    <div className="mt-8">
+                                        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider font-worksans mb-4">
+                                            Otras Atenciones / Fichas sin caso base
+                                        </h3>
+                                        {sinBase.map((ficha) => (
+                                            <div key={ficha.id} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 mb-4">
+                                                <div className="flex flex-col md:flex-row justify-between gap-4">
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center gap-3 mb-2">
+                                                            <span className="px-2.5 py-0.5 rounded-full bg-gray-100 text-gray-700 text-xs font-bold font-worksans uppercase tracking-wide">
+                                                                Atención Directa
+                                                            </span>
+                                                            <span className="flex items-center text-sm text-gray-500 font-worksans">
+                                                                <Clock className="w-4 h-4 mr-1" />
+                                                                {new Date(ficha.fecha_modificacion || ficha.fecha_creacion || '').toLocaleDateString()}
+                                                            </span>
+                                                        </div>
+                                                        <h3 className="text-lg font-bold text-gray-900 font-arizona">
+                                                            {ficha.motivo_consulta}
+                                                        </h3>
+                                                    </div>
+                                                    <Link
+                                                        to={`/fichas/${ficha.id}`}
+                                                        className="p-2 text-gray-400 hover:text-aqua"
+                                                    >
+                                                        <FileText className="w-6 h-6" />
+                                                    </Link>
+                                                </div>
+                                            </div>
+                                        ))}
                                     </div>
-                                    <h3 className="text-lg font-bold text-gray-900 font-arizona mb-1">
-                                        {ficha.motivo_consulta}
-                                    </h3>
-                                    <p className="text-gray-600 font-worksans text-sm line-clamp-2">
-                                        Diagnóstico: <span className="font-medium text-gray-900">{ficha.diagnostico}</span>
-                                    </p>
-                                </div>
-                                
-                                <div className="flex items-center gap-4 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6">
-                                    <div className="text-right hidden md:block">
-                                        <p className="text-xs text-gray-500 font-worksans">Atendido por</p>
-                                        <p className="text-sm font-medium text-gray-900 font-worksans">{ficha.creado_por_nombre}</p>
-                                    </div>
-                                    <Link 
-                                        to={`/fichas/${ficha.id}`}
-                                        className="p-2 text-gray-400 hover:text-aqua hover:bg-aqua/5 rounded-full transition-colors"
-                                        title="Ver detalle"
-                                    >
-                                        <FileText className="w-6 h-6" />
-                                    </Link>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+                                )}
+                            </>
+                        );
+                    })()}
                 </div>
             </div>
         </div>

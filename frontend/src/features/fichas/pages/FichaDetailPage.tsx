@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, AlertCircle, History, Users, FileText, Copy, ClipboardList, Eye, RotateCcw } from 'lucide-react';
 import { FichaAmbulatoria, FichaHistorial } from '../types';
-import { 
-    getFicha, deleteFicha, updateFicha, 
-    getFichaHistorial, crearMiFicha, getFichasEstudiantes 
+import {
+    getFicha, deleteFicha, updateFicha,
+    getFichaHistorial, crearMiFicha, getFichasEstudiantes
 } from '../services/fichaService';
 import { useAuth } from '../../auth/context/AuthContext';
 
@@ -21,10 +21,10 @@ const FichaDetailPage = () => {
     const [isProcessing, setIsProcessing] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
-    
+
     // Estado de pestaña activa
     const [activeTab, setActiveTab] = useState<TabType>('caso');
-    
+
     // Estados para historial y fichas de estudiantes
     const [historial, setHistorial] = useState<FichaHistorial[]>([]);
     const [historialLoading, setHistorialLoading] = useState(false);
@@ -32,7 +32,7 @@ const FichaDetailPage = () => {
     const [fichasEstudiantes, setFichasEstudiantes] = useState<FichaAmbulatoria[]>([]);
     const [estudiantesLoading, setEstudiantesLoading] = useState(false);
     const [estudiantesLoaded, setEstudiantesLoaded] = useState(false);
-    
+
     // Estado para versión seleccionada del historial
     const [selectedVersion, setSelectedVersion] = useState<FichaHistorial | null>(null);
 
@@ -197,8 +197,8 @@ const FichaDetailPage = () => {
                     <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
                     <h2 className="text-xl font-semibold text-gray-900 mb-2">Ficha no encontrada</h2>
                     <p className="text-gray-600 mb-4">La ficha que buscas no existe o fue eliminada.</p>
-                    <Link 
-                        to="/fichas" 
+                    <Link
+                        to="/fichas"
                         className="text-aqua hover:text-blue-600 font-medium"
                     >
                         Volver a la lista de fichas
@@ -231,8 +231,8 @@ const FichaDetailPage = () => {
             {/* Top Navigation */}
             <div className="bg-white shadow-sm border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <Link 
-                        to={paciente ? `/pacientes/${paciente.id}` : '/fichas'} 
+                    <Link
+                        to={paciente ? `/pacientes/${paciente.id}` : '/fichas'}
                         className="inline-flex items-center text-gray-500 hover:text-aqua transition-colors font-worksans"
                     >
                         <ChevronLeft className="w-5 h-5 mr-1" />
@@ -242,7 +242,7 @@ const FichaDetailPage = () => {
             </div>
 
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                
+
                 {/* Header con info del paciente */}
                 {paciente && (
                     <div className="mb-6">
@@ -355,7 +355,7 @@ const FichaDetailPage = () => {
                 </div>
 
                 {/* Contenido de las Pestañas */}
-                
+
                 {/* TAB: Caso Clínico */}
                 {activeTab === 'caso' && (
                     <div className="bg-white shadow-md rounded-lg p-6 mb-8">
@@ -472,17 +472,16 @@ const FichaDetailPage = () => {
                                         </label>
                                         <textarea
                                             name={field.name}
-                                            value={selectedVersion 
+                                            value={selectedVersion
                                                 ? (selectedVersion[field.name as keyof FichaHistorial] as string || '')
                                                 : (editableFicha[field.name as keyof FichaAmbulatoria] as string || '')
                                             }
                                             onChange={handleInputChange}
                                             readOnly={!isEditing || !!selectedVersion}
-                                            className={`w-full border rounded-md p-2 ${
-                                                selectedVersion 
-                                                    ? 'bg-amber-50 border-amber-200' 
-                                                    : isEditing ? 'bg-white border-gray-300' : 'bg-gray-100 border-gray-200'
-                                            } resize-none font-worksans`}
+                                            className={`w-full border rounded-md p-2 ${selectedVersion
+                                                ? 'bg-amber-50 border-amber-200'
+                                                : isEditing ? 'bg-white border-gray-300' : 'bg-gray-100 border-gray-200'
+                                                } resize-none font-worksans`}
                                             rows={3}
                                         />
                                     </div>
@@ -495,17 +494,16 @@ const FichaDetailPage = () => {
                                 <label className="text-lg font-worksans font-semibold block mb-1">Diagnóstico</label>
                                 <textarea
                                     name="diagnostico"
-                                    value={selectedVersion 
+                                    value={selectedVersion
                                         ? (selectedVersion.diagnostico || '')
                                         : (editableFicha.diagnostico || '')
                                     }
                                     onChange={handleInputChange}
                                     readOnly={!isEditing || !!selectedVersion}
-                                    className={`w-full border rounded-md p-2 ${
-                                        selectedVersion 
-                                            ? 'bg-amber-50 border-amber-200' 
-                                            : isEditing ? 'bg-white border-gray-300' : 'bg-gray-100 border-gray-200'
-                                    } resize-none font-worksans`}
+                                    className={`w-full border rounded-md p-2 ${selectedVersion
+                                        ? 'bg-amber-50 border-amber-200'
+                                        : isEditing ? 'bg-white border-gray-300' : 'bg-gray-100 border-gray-200'
+                                        } resize-none font-worksans`}
                                     rows={3}
                                 />
                             </div>
@@ -516,17 +514,16 @@ const FichaDetailPage = () => {
                                 <label className="text-lg font-worksans font-semibold block mb-1">Intervenciones</label>
                                 <textarea
                                     name="intervenciones"
-                                    value={selectedVersion 
+                                    value={selectedVersion
                                         ? (selectedVersion.intervenciones || '')
                                         : (editableFicha.intervenciones || '')
                                     }
                                     onChange={handleInputChange}
                                     readOnly={!isEditing || !!selectedVersion}
-                                    className={`w-full border rounded-md p-2 ${
-                                        selectedVersion 
-                                            ? 'bg-amber-50 border-amber-200' 
-                                            : isEditing ? 'bg-white border-gray-300' : 'bg-gray-100 border-gray-200'
-                                    } resize-none font-worksans`}
+                                    className={`w-full border rounded-md p-2 ${selectedVersion
+                                        ? 'bg-amber-50 border-amber-200'
+                                        : isEditing ? 'bg-white border-gray-300' : 'bg-gray-100 border-gray-200'
+                                        } resize-none font-worksans`}
                                     rows={3}
                                 />
                             </div>
@@ -541,9 +538,8 @@ const FichaDetailPage = () => {
                                                     <button
                                                         onClick={handleSave}
                                                         disabled={isProcessing}
-                                                        className={`bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-700 font-worksans font-normal ${
-                                                            isProcessing ? 'opacity-50 cursor-not-allowed' : ''
-                                                        }`}
+                                                        className={`bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-700 font-worksans font-normal ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''
+                                                            }`}
                                                     >
                                                         {isProcessing ? 'Guardando...' : 'Guardar'}
                                                     </button>
@@ -569,13 +565,12 @@ const FichaDetailPage = () => {
                                         <button
                                             onClick={() => setShowDeleteModal(true)}
                                             disabled={isProcessing}
-                                        className={`bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-700 font-worksans font-normal ${
-                                            isProcessing ? 'opacity-50 cursor-not-allowed' : ''
-                                        }`}
-                                    >
-                                        {isProcessing ? 'Eliminando...' : 'Eliminar'}
-                                    </button>
-                                )}
+                                            className={`bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-700 font-worksans font-normal ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''
+                                                }`}
+                                        >
+                                            {isProcessing ? 'Eliminando...' : 'Eliminar'}
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -589,7 +584,7 @@ const FichaDetailPage = () => {
                             <History className="w-6 h-6 mr-3 text-aqua" />
                             <h2 className="text-2xl font-worksans font-semibold">Historial de Cambios</h2>
                         </div>
-                        
+
                         {historialLoading ? (
                             <div className="flex items-center justify-center py-12">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-aqua"></div>
@@ -605,33 +600,110 @@ const FichaDetailPage = () => {
                             </div>
                         ) : (
                             <div className="space-y-4">
-                                {historial.map((version, index) => (
-                                    <div 
-                                        key={version.id} 
-                                        className={`border rounded-lg p-4 ${
-                                            selectedVersion?.id === version.id 
-                                                ? 'border-amber-400 bg-amber-50' 
-                                                : index === 0 ? 'border-aqua bg-blue-50' : 'border-gray-200'
+                                {/* Versión Actual */}
+                                <div
+                                    className={`border rounded-lg p-4 ${!selectedVersion
+                                        ? 'border-aqua bg-blue-50'
+                                        : 'border-gray-200 bg-white'
                                         }`}
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex-1">
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className={`font-semibold ${!selectedVersion ? 'text-aqua' : 'text-gray-700'}`}>
+                                                    Versión Actual (Más reciente)
+                                                </span>
+                                                {!selectedVersion && (
+                                                    <span className="px-2 py-0.5 bg-aqua text-white text-xs rounded-full">
+                                                        Visualizando
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-sm text-gray-600 font-worksans">
+                                                <span className="font-medium">Modificado por:</span> {ficha.modificado_por_nombre || 'Desconocido'}
+                                            </p>
+                                            <p className="text-sm text-gray-500 font-worksans">
+                                                <span className="font-medium">Última modificación:</span> {new Date(ficha.fecha_modificacion || '').toLocaleString()}
+                                            </p>
+                                        </div>
+
+                                        <button
+                                            onClick={handleClearVersion}
+                                            disabled={!selectedVersion}
+                                            className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-worksans ${!selectedVersion
+                                                ? 'bg-blue-200 text-blue-800'
+                                                : 'bg-gray-100 text-gray-700 hover:bg-aqua hover:text-white'
+                                                }`}
+                                        >
+                                            <Eye className="w-4 h-4 mr-1" />
+                                            {!selectedVersion ? 'Seleccionada' : 'Visualizar'}
+                                        </button>
+                                    </div>
+                                    <details className="mt-3">
+                                        <summary className="cursor-pointer text-sm text-aqua hover:text-blue-700 font-worksans">
+                                            Ver contenido actual
+                                        </summary>
+                                        <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                            {ficha.factores && (
+                                                <div className="bg-gray-50 p-2 rounded">
+                                                    <span className="font-medium">Factores:</span>
+                                                    <p className="text-gray-600 truncate">{ficha.factores}</p>
+                                                </div>
+                                            )}
+                                            {ficha.anamnesis && (
+                                                <div className="bg-gray-50 p-2 rounded">
+                                                    <span className="font-medium">Anamnesis:</span>
+                                                    <p className="text-gray-600 truncate">{ficha.anamnesis}</p>
+                                                </div>
+                                            )}
+                                            {ficha.motivo_consulta && (
+                                                <div className="bg-gray-50 p-2 rounded">
+                                                    <span className="font-medium">Motivo Consulta:</span>
+                                                    <p className="text-gray-600 truncate">{ficha.motivo_consulta}</p>
+                                                </div>
+                                            )}
+                                            {ficha.diagnostico && (
+                                                <div className="bg-gray-50 p-2 rounded">
+                                                    <span className="font-medium">Diagnóstico:</span>
+                                                    <p className="text-gray-600 truncate">{ficha.diagnostico}</p>
+                                                </div>
+                                            )}
+                                            {ficha.intervenciones && (
+                                                <div className="bg-gray-50 p-2 rounded">
+                                                    <span className="font-medium">Intervenciones:</span>
+                                                    <p className="text-gray-600 truncate">{ficha.intervenciones}</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </details>
+                                </div>
+
+                                {/* Versiones Anteriores */}
+                                {historial.map((version, index) => (
+                                    <div
+                                        key={version.id}
+                                        className={`border rounded-lg p-4 ${selectedVersion?.id === version.id
+                                                ? 'border-aqua bg-blue-50'
+                                                : 'border-gray-200 bg-white'
+                                            }`}
                                     >
                                         <div className="flex justify-between items-start">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-2">
-                                                    <span className={`font-semibold ${
-                                                        selectedVersion?.id === version.id 
-                                                            ? 'text-amber-700' 
-                                                            : index === 0 ? 'text-aqua' : 'text-gray-700'
-                                                    }`}>
+                                                    <span className={`font-semibold ${selectedVersion?.id === version.id
+                                                            ? 'text-aqua'
+                                                            : 'text-gray-700'
+                                                        }`}>
                                                         Versión {version.version}
                                                     </span>
                                                     {selectedVersion?.id === version.id && (
-                                                        <span className="px-2 py-0.5 bg-amber-500 text-white text-xs rounded-full">
+                                                        <span className="px-2 py-0.5 bg-aqua text-white text-xs rounded-full">
                                                             Visualizando
                                                         </span>
                                                     )}
-                                                    {index === 0 && selectedVersion?.id !== version.id && (
-                                                        <span className="px-2 py-0.5 bg-aqua text-white text-xs rounded-full">
-                                                            Más reciente
+                                                    {index === 0 && (
+                                                        <span className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded-full">
+                                                            Punto de restauración
                                                         </span>
                                                     )}
                                                 </div>
@@ -642,21 +714,20 @@ const FichaDetailPage = () => {
                                                     <span className="font-medium">Fecha:</span> {new Date(version.fecha).toLocaleString()}
                                                 </p>
                                             </div>
-                                            
+
                                             {/* Botón para visualizar esta versión */}
                                             <button
                                                 onClick={() => handleSelectVersion(version)}
-                                                className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-worksans ${
-                                                    selectedVersion?.id === version.id
-                                                        ? 'bg-amber-200 text-amber-800'
-                                                        : 'bg-gray-100 text-gray-700 hover:bg-aqua hover:text-white'
-                                                }`}
+                                                className={`inline-flex items-center px-3 py-1.5 rounded-md text-sm font-worksans ${selectedVersion?.id === version.id
+                                                    ? 'bg-amber-200 text-amber-800'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-aqua hover:text-white'
+                                                    }`}
                                             >
                                                 <Eye className="w-4 h-4 mr-1" />
                                                 {selectedVersion?.id === version.id ? 'Seleccionada' : 'Visualizar'}
                                             </button>
                                         </div>
-                                        
+
                                         {/* Mostrar un resumen de los campos modificados */}
                                         <details className="mt-3">
                                             <summary className="cursor-pointer text-sm text-aqua hover:text-blue-700 font-worksans">
@@ -709,7 +780,7 @@ const FichaDetailPage = () => {
                             <Users className="w-6 h-6 mr-3 text-aqua" />
                             <h2 className="text-2xl font-worksans font-semibold">Fichas de Estudiantes</h2>
                         </div>
-                        
+
                         {estudiantesLoading ? (
                             <div className="flex items-center justify-center py-12">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-aqua"></div>
@@ -790,9 +861,8 @@ const FichaDetailPage = () => {
                             <button
                                 onClick={handleDelete}
                                 disabled={isProcessing}
-                                className={`px-4 py-2 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 transition-colors font-worksans ${
-                                    isProcessing ? 'opacity-50 cursor-not-allowed' : ''
-                                }`}
+                                className={`px-4 py-2 bg-red-600 text-white rounded-md font-medium hover:bg-red-700 transition-colors font-worksans ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''
+                                    }`}
                             >
                                 {isProcessing ? 'Eliminando...' : 'Eliminar'}
                             </button>
