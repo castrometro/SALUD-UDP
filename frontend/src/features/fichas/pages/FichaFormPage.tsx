@@ -64,7 +64,11 @@ const FichaFormPage = () => {
                 navigate(`/fichas/${id}`);
             } else {
                 const nuevaFicha = await createFicha(formData);
-                navigate(`/fichas/${nuevaFicha.id}`);
+                if (nuevaFicha.paciente || formData.paciente) {
+                    navigate(`/pacientes/${nuevaFicha.paciente || formData.paciente}`);
+                } else {
+                    navigate(`/fichas/${nuevaFicha.id}`);
+                }
             }
         } catch (error) {
             console.error('Error saving ficha', error);
@@ -77,19 +81,19 @@ const FichaFormPage = () => {
             <h1 className="text-2xl font-semibold text-gray-900 mb-2">
                 {isEdit ? 'Editar Ficha' : (isDocente ? 'Crear Caso Clínico (Ficha Base)' : 'Nueva Ficha')}
             </h1>
-            
+
             {/* Nota informativa para docentes */}
             {!isEdit && isDocente && (
                 <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
                     <p className="text-purple-800 font-worksans text-sm">
-                        <strong>📋 Ficha Base:</strong> Esta ficha servirá como caso clínico inicial. 
+                        <strong>📋 Ficha Base:</strong> Esta ficha servirá como caso clínico inicial.
                         Los estudiantes podrán crear sus propias copias para trabajar de forma independiente.
                     </p>
                 </div>
             )}
-            
+
             <form onSubmit={handleSubmit} className="bg-white shadow sm:rounded-lg p-6 space-y-6">
-                
+
                 <div className="mb-4">
                     <label htmlFor="paciente" className="block text-sm font-medium text-gray-700 mb-1">Paciente</label>
                     <PacienteSelect
@@ -206,7 +210,13 @@ const FichaFormPage = () => {
                 <div className="flex justify-end">
                     <button
                         type="button"
-                        onClick={() => navigate('/fichas')}
+                        onClick={() => {
+                            if (formData.paciente) {
+                                navigate(`/pacientes/${formData.paciente}`);
+                            } else {
+                                navigate(-1);
+                            }
+                        }}
                         className="bg-white py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 mr-3"
                     >
                         Cancelar

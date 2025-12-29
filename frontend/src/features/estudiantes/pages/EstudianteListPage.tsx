@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Estudiante } from '../types';
 import { getEstudiantes } from '../services/estudianteService';
@@ -28,11 +28,11 @@ const EstudianteListPage = () => {
     };
 
     // Filter logic
-    const filteredEstudiantes = estudiantes.filter(estudiante => 
+    const filteredEstudiantes = estudiantes.filter(estudiante =>
         estudiante.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         estudiante.last_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        estudiante.rut.includes(searchTerm) ||
-        estudiante.email.includes(searchTerm)
+        (estudiante.rut && estudiante.rut.includes(searchTerm)) ||
+        (estudiante.email && estudiante.email.includes(searchTerm))
     );
 
     // Pagination logic
@@ -122,9 +122,12 @@ const EstudianteListPage = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                 <div className="flex justify-end space-x-2">
-                                                    <button className="text-gray-400 hover:text-blue-600 transition-colors">
+                                                    <Link
+                                                        to={`/estudiantes/${estudiante.id}`}
+                                                        className="text-gray-400 hover:text-blue-600 transition-colors"
+                                                    >
                                                         <Eye className="w-5 h-5" />
-                                                    </button>
+                                                    </Link>
                                                     <Link to={`/estudiantes/${estudiante.id}/editar`} className="text-gray-400 hover:text-amber-500 transition-colors">
                                                         <Edit2 className="w-5 h-5" />
                                                     </Link>
@@ -168,11 +171,10 @@ const EstudianteListPage = () => {
                                         <button
                                             key={i}
                                             onClick={() => setCurrentPage(i + 1)}
-                                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${
-                                                currentPage === i + 1
-                                                    ? 'z-10 bg-aqua border-aqua text-white'
-                                                    : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                                            }`}
+                                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === i + 1
+                                                ? 'z-10 bg-aqua border-aqua text-white'
+                                                : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
+                                                }`}
                                         >
                                             {i + 1}
                                         </button>

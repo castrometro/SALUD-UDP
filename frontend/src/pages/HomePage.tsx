@@ -45,13 +45,13 @@ export default function HomePage() {
     ],
     circleButton: isAuthenticated
       ? {
-          text: "ADMIN MENU",
-          onClick: () => navigate('/menu-usuario')
-        }
+        text: "MENU",
+        onClick: () => navigate('/menu-usuario')
+      }
       : {
-          text: "INICIAR SESIÓN",
-          link: "/login"
-        },
+        text: "INICIAR SESIÓN",
+        link: "/login"
+      },
   };
 
   return (

@@ -5,4 +5,5 @@ export interface Estudiante {
     last_name: string;
     email: string;
     role: 'ADMIN' | 'DOCENTE' | 'ESTUDIANTE';
+    is_active: boolean;
 }

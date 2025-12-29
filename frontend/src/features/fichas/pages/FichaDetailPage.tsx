@@ -160,7 +160,11 @@ const FichaDetailPage = () => {
         try {
             await deleteFicha(parseInt(id));
             alert('Ficha eliminada correctamente.');
-            navigate('/fichas');
+            if (ficha?.paciente) {
+                navigate(`/pacientes/${ficha.paciente}`);
+            } else {
+                navigate('/pacientes');
+            }
         } catch (error) {
             console.error('Error deleting ficha', error);
             alert('Error al eliminar la ficha');
@@ -198,10 +202,10 @@ const FichaDetailPage = () => {
                     <h2 className="text-xl font-semibold text-gray-900 mb-2">Ficha no encontrada</h2>
                     <p className="text-gray-600 mb-4">La ficha que buscas no existe o fue eliminada.</p>
                     <Link
-                        to="/fichas"
+                        to="/pacientes"
                         className="text-aqua hover:text-blue-600 font-medium"
                     >
-                        Volver a la lista de fichas
+                        Volver al paciente
                     </Link>
                 </div>
             </div>
@@ -232,11 +236,11 @@ const FichaDetailPage = () => {
             <div className="bg-white shadow-sm border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
                     <Link
-                        to={paciente ? `/pacientes/${paciente.id}` : '/fichas'}
+                        to={paciente ? `/pacientes/${paciente.id}` : '/pacientes'}
                         className="inline-flex items-center text-gray-500 hover:text-aqua transition-colors font-worksans"
                     >
                         <ChevronLeft className="w-5 h-5 mr-1" />
-                        {paciente ? 'Volver al paciente' : 'Volver a fichas'}
+                        Volver al paciente
                     </Link>
                 </div>
             </div>
@@ -683,16 +687,16 @@ const FichaDetailPage = () => {
                                     <div
                                         key={version.id}
                                         className={`border rounded-lg p-4 ${selectedVersion?.id === version.id
-                                                ? 'border-aqua bg-blue-50'
-                                                : 'border-gray-200 bg-white'
+                                            ? 'border-aqua bg-blue-50'
+                                            : 'border-gray-200 bg-white'
                                             }`}
                                     >
                                         <div className="flex justify-between items-start">
                                             <div className="flex-1">
                                                 <div className="flex items-center gap-2 mb-2">
                                                     <span className={`font-semibold ${selectedVersion?.id === version.id
-                                                            ? 'text-aqua'
-                                                            : 'text-gray-700'
+                                                        ? 'text-aqua'
+                                                        : 'text-gray-700'
                                                         }`}>
                                                         Versión {version.version}
                                                     </span>

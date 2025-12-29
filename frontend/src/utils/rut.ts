@@ -1,8 +1,10 @@
-export const cleanRut = (rut: string): string => {
+export const cleanRut = (rut: string | null | undefined): string => {
+  if (!rut) return '';
   return rut.replace(/[^0-9kK]/g, '').toUpperCase();
 };
 
-export const formatRut = (rut: string): string => {
+export const formatRut = (rut: string | null | undefined): string => {
+  if (!rut) return 'N/A';
   const clean = cleanRut(rut);
   if (clean.length <= 1) return clean;
 
@@ -17,7 +19,8 @@ export const formatRut = (rut: string): string => {
   return `${formattedBody}-${dv}`;
 };
 
-export const validateRut = (rut: string): boolean => {
+export const validateRut = (rut: string | null | undefined): boolean => {
+  if (!rut) return false;
   const clean = cleanRut(rut);
   if (clean.length < 8) return false; // Minimum length for valid RUT
 

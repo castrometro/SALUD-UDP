@@ -29,19 +29,15 @@ export default function MenuUsuario() {
   const isAdmin = user?.role === 'ADMIN';
   const isDocente = user?.role === 'DOCENTE';
   const isEstudiante = user?.role === 'ESTUDIANTE';
-  
+
   if (isAdmin || isDocente || isEstudiante) {
-      cards.push({ title: "Gestión de Pacientes", link: "/pacientes" });
-  }
-  
-  if (isAdmin || isDocente || isEstudiante) {
-      cards.push({ title: "Gestión de Fichas", link: "/fichas" });
+    cards.push({ title: "Gestión de Pacientes", link: "/pacientes" });
   }
 
   if (isAdmin || isDocente) {
-      cards.push({ title: "Gestión de Estudiantes", link: "/estudiantes" });
+    cards.push({ title: "Gestión de Estudiantes", link: "/estudiantes" });
   }
-  
+
   // Add more cards as needed based on roles
 
   return (
@@ -62,11 +58,11 @@ export default function MenuUsuario() {
         </div>
 
         <div className="container mx-auto px-4 py-20">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {cards.map((card, index) => (
-                    <AdminCard key={index} {...card} />
-                ))}
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {cards.map((card, index) => (
+              <AdminCard key={index} {...card} />
+            ))}
+          </div>
         </div>
       </main>
       <Footer />

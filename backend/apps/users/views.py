@@ -27,3 +27,21 @@ class UserViewSet(viewsets.ModelViewSet):
     def me(self, request):
         serializer = self.get_serializer(request.user)
         return Response(serializer.data)
+
+class EstudianteViewSet(viewsets.ModelViewSet):
+    """ViewSet específico para la gestión de estudiantes"""
+    queryset = User.objects.filter(role=User.Role.ESTUDIANTE)
+    serializer_class = UserSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return User.objects.filter(role=User.Role.ESTUDIANTE)
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return UserCreateSerializer
+        return UserSerializer
+
+    def perform_create(self, serializer):
+        # Asegurar que siempre se cree con el rol de ESTUDIANTE
+        serializer.save(role=User.Role.ESTUDIANTE)

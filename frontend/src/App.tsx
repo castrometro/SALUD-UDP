@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './features/auth/context/AuthContext';
 import LoginPage from './features/auth/pages/LoginPage';
@@ -8,10 +7,10 @@ import Layout from './components/Layout';
 import PacienteListPage from './features/pacientes/pages/PacienteListPage';
 import PacienteFormPage from './features/pacientes/pages/PacienteFormPage';
 import PacienteDetailPage from './features/pacientes/pages/PacienteDetailPage';
-import FichaListPage from './features/fichas/pages/FichaListPage';
 import FichaFormPage from './features/fichas/pages/FichaFormPage';
 import FichaDetailPage from './features/fichas/pages/FichaDetailPage';
 import EstudianteListPage from './features/estudiantes/pages/EstudianteListPage';
+import EstudianteDetailPage from './features/estudiantes/pages/EstudianteDetailPage';
 
 const PrivateRoute = ({ children }: { children: JSX.Element }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -30,14 +29,14 @@ function App() {
                 <Routes>
                     <Route path="/" element={<HomePage />} />
                     <Route path="/login" element={<LoginPage />} />
-                    
-                    <Route 
-                        path="/menu-usuario" 
+
+                    <Route
+                        path="/menu-usuario"
                         element={
                             <PrivateRoute>
                                 <MenuUsuario />
                             </PrivateRoute>
-                        } 
+                        }
                     />
 
                     <Route
@@ -52,15 +51,14 @@ function App() {
                         <Route path="pacientes/nuevo" element={<PacienteFormPage />} />
                         <Route path="pacientes/:id" element={<PacienteDetailPage />} />
                         <Route path="pacientes/:id/editar" element={<PacienteFormPage />} />
-
                         {/* Fichas */}
-                        <Route path="fichas" element={<FichaListPage />} />
                         <Route path="fichas/nueva" element={<FichaFormPage />} />
                         <Route path="fichas/:id" element={<FichaDetailPage />} />
                         <Route path="fichas/:id/editar" element={<FichaFormPage />} />
 
                         {/* Estudiantes */}
                         <Route path="estudiantes" element={<EstudianteListPage />} />
+                        <Route path="estudiantes/:id" element={<EstudianteDetailPage />} />
                     </Route>
                 </Routes>
             </AuthProvider>
