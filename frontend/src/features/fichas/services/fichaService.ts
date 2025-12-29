@@ -20,6 +20,13 @@ export const getFichasByPaciente = async (pacienteId: number): Promise<FichaAmbu
     return response.data;
 };
 
+export const getFichasByEstudiante = async (estudianteId: number): Promise<FichaAmbulatoria[]> => {
+    const response = await api.get<FichaAmbulatoria[]>('/fichas/', {
+        params: { estudiante: estudianteId }
+    });
+    return response.data;
+};
+
 export const getFicha = async (id: number): Promise<FichaAmbulatoria> => {
     const response = await api.get<FichaAmbulatoria>(`/fichas/${id}/`);
     return response.data;

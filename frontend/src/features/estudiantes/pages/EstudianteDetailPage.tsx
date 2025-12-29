@@ -2,26 +2,36 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Estudiante } from '../types';
 import { getEstudiante } from '../services/estudianteService';
-import { ChevronLeft, Mail, CreditCard, User, AlertCircle } from 'lucide-react';
+import { getFichasByEstudiante } from '../../fichas/services/fichaService';
+import { FichaAmbulatoria } from '../../fichas/types';
+import EstudianteFichasTab from '../components/EstudianteFichasTab';
+import EstudianteCasosTab from '../components/EstudianteCasosTab';
+import { ChevronLeft, Mail, CreditCard, User, AlertCircle, FileText, Users } from 'lucide-react';
 import { formatRut } from '../../../utils/rut';
 
 const EstudianteDetailPage = () => {
     const { id } = useParams<{ id: string }>();
     const [estudiante, setEstudiante] = useState<Estudiante | null>(null);
+    const [fichas, setFichas] = useState<FichaAmbulatoria[]>([]);
+    const [activeTab, setActiveTab] = useState<'fichas' | 'casos'>('fichas');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         if (id) {
-            loadEstudiante(parseInt(id));
+            loadData(parseInt(id));
         }
     }, [id]);
 
-    const loadEstudiante = async (estudianteId: number) => {
+    const loadData = async (estudianteId: number) => {
         try {
-            const data = await getEstudiante(estudianteId);
-            setEstudiante(data);
+            const [estudianteData, fichasData] = await Promise.all([
+                getEstudiante(estudianteId),
+                getFichasByEstudiante(estudianteId)
+            ]);
+            setEstudiante(estudianteData);
+            setFichas(fichasData);
         } catch (error) {
-            console.error('Error loading estudiante', error);
+            console.error('Error loading datas', error);
         } finally {
             setLoading(false);
         }
@@ -114,10 +124,44 @@ const EstudianteDetailPage = () => {
                 </div>
 
                 {/* Future: Activity Section */}
-                <div className="mt-8 bg-white/50 border border-dashed border-gray-300 rounded-2xl p-12 text-center">
-                    <p className="text-gray-500 font-worksans italic">
-                        Próximamente: Historial de fichas clínicas y evaluaciones del estudiante.
-                    </p>
+                {/* History Section */}
+                <div className="mt-8">
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                        {/* Tabs Header */}
+                        <div className="border-b border-gray-200">
+                            <nav className="flex -mb-px" aria-label="Tabs">
+                                <button
+                                    onClick={() => setActiveTab('fichas')}
+                                    className={`w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm flex items-center justify-center gap-2 ${activeTab === 'fichas'
+                                            ? 'border-aqua text-aqua'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                >
+                                    <FileText className="w-5 h-5" />
+                                    Fichas Clínicas
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('casos')}
+                                    className={`w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm flex items-center justify-center gap-2 ${activeTab === 'casos'
+                                            ? 'border-aqua text-aqua'
+                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        }`}
+                                >
+                                    <Users className="w-5 h-5" />
+                                    Casos (Pacientes)
+                                </button>
+                            </nav>
+                        </div>
+
+                        {/* Tab Content */}
+                        <div className="p-6">
+                            {activeTab === 'fichas' ? (
+                                <EstudianteFichasTab fichas={fichas} />
+                            ) : (
+                                <EstudianteCasosTab fichas={fichas} />
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
