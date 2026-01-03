@@ -1,30 +1,32 @@
 import { Paciente } from '../pacientes/types';
 
+export interface FichaBaseInfo {
+    id: number;
+    fecha_modificacion: string;
+    modificado_por_nombre?: string | null;
+}
+
 export interface FichaAmbulatoria {
     id: number;
     paciente: number; // ID
     paciente_detail?: Paciente; // From serializer
-    
+
     // Tipo de ficha
     es_plantilla: boolean;
-    ficha_base?: number; // ID de la ficha plantilla
-    ficha_base_info?: {
-        id: number;
-        fecha_modificacion: string;
-        modificado_por_nombre?: string;
-    };
-    estudiante?: number; // ID del estudiante dueño
-    estudiante_nombre?: string;
-    
+    ficha_base: number | null; // ID de la ficha plantilla
+    ficha_base_info: FichaBaseInfo | null;
+    estudiante: number | null; // ID del estudiante dueño
+    estudiante_nombre?: string | null;
+
     // Trazabilidad
-    creado_por?: number;
-    creado_por_nombre?: string;
-    modificado_por?: number;
-    modificado_por_nombre?: string;
+    creado_por?: number | null;
+    creado_por_nombre?: string | null;
+    modificado_por?: number | null;
+    modificado_por_nombre?: string | null;
     fecha_creacion?: string;
     fecha_modificacion?: string;
     total_versiones?: number;
-    
+
     // Campos clínicos
     motivo_consulta: string;
     anamnesis: string;
@@ -43,7 +45,7 @@ export interface FichaHistorial {
     modificado_por?: number;
     modificado_por_nombre?: string;
     fecha: string;
-    
+
     // Snapshot de campos clínicos
     motivo_consulta: string;
     anamnesis: string;
