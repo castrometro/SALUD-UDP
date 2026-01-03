@@ -1,11 +1,13 @@
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, filters
 from .models import Paciente
 from .serializers import PacienteSerializer
 from apps.users.permissions import IsDocenteOrAdmin
 
 class PacienteViewSet(viewsets.ModelViewSet):
-    queryset = Paciente.objects.all()
+    queryset = Paciente.objects.all().order_by('apellido', 'nombre')
     serializer_class = PacienteSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['nombre', 'apellido', 'rut']
     
     def get_permissions(self):
         """

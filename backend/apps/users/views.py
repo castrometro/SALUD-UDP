@@ -1,4 +1,4 @@
-from rest_framework import viewsets, permissions
+from rest_framework import viewsets, permissions, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.contrib.auth import get_user_model
@@ -30,12 +30,14 @@ class UserViewSet(viewsets.ModelViewSet):
 
 class EstudianteViewSet(viewsets.ModelViewSet):
     """ViewSet específico para la gestión de estudiantes"""
-    queryset = User.objects.filter(role=User.Role.ESTUDIANTE)
+    queryset = User.objects.filter(role=User.Role.ESTUDIANTE).order_by('last_name', 'first_name')
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['first_name', 'last_name', 'rut', 'email']
 
     def get_queryset(self):
-        return User.objects.filter(role=User.Role.ESTUDIANTE)
+        return User.objects.filter(role=User.Role.ESTUDIANTE).order_by('last_name', 'first_name')
 
     def get_serializer_class(self):
         if self.action == 'create':

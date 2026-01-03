@@ -2,42 +2,48 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Paciente } from '../types';
 import { getPacientes } from '../services/pacienteService';
-import { Search, Plus, Edit2, Trash2, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, Plus, Edit2, Trash2, Eye } from 'lucide-react';
 import { formatRut } from '../../../utils/rut';
+import Pagination from '../../../components/ui/Pagination';
 
 const PacienteListPage = () => {
     const [pacientes, setPacientes] = useState<Paciente[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const itemsPerPage = 5;
+    const [totalPages, setTotalPages] = useState(0);
+    const [totalItems, setTotalItems] = useState(0);
+    const itemsPerPage = 10;
 
     useEffect(() => {
         loadPacientes();
-    }, []);
+    }, [currentPage]);
+
+    useEffect(() => {
+        const timeoutId = setTimeout(() => {
+            if (currentPage === 1) {
+                loadPacientes();
+            } else {
+                setCurrentPage(1);
+            }
+        }, 500);
+        return () => clearTimeout(timeoutId);
+    }, [searchTerm]);
 
     const loadPacientes = async () => {
         try {
-            const data = await getPacientes();
-            setPacientes(data);
+            setLoading(true);
+            const data = await getPacientes(currentPage, searchTerm);
+            setPacientes(data.results);
+            const calculatedTotalPages = Math.ceil(data.count / itemsPerPage);
+            setTotalPages(calculatedTotalPages);
+            setTotalItems(data.count);
         } catch (error) {
             console.error('Error loading pacientes', error);
         } finally {
             setLoading(false);
         }
     };
-
-    // Filter logic
-    const filteredPacientes = pacientes.filter(paciente =>
-        paciente.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        paciente.apellido.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (paciente.rut && paciente.rut.includes(searchTerm))
-    );
-
-    // Pagination logic
-    const totalPages = Math.ceil(filteredPacientes.length / itemsPerPage);
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    const currentPacientes = filteredPacientes.slice(startIndex, startIndex + itemsPerPage);
 
     return (
         <div className="min-h-screen bg-beige">
@@ -97,8 +103,8 @@ const PacienteListPage = () => {
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-gray-200">
-                                {currentPacientes.length > 0 ? (
-                                    currentPacientes.map((paciente) => (
+                                {pacientes.length > 0 ? (
+                                    pacientes.map((paciente) => (
                                         <tr key={paciente.rut} className="hover:bg-gray-50 transition-colors duration-150">
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <div className="flex items-center">
@@ -128,8 +134,8 @@ const PacienteListPage = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full font-worksans ${paciente.prevision === 'FONASA' ? 'bg-green-100 text-green-800' :
-                                                        paciente.prevision === 'ISAPRE' ? 'bg-purple-100 text-purple-800' :
-                                                            'bg-yellow-100 text-yellow-800'
+                                                    paciente.prevision === 'ISAPRE' ? 'bg-purple-100 text-purple-800' :
+                                                        'bg-yellow-100 text-yellow-800'
                                                     }`}>
                                                     {paciente.prevision}
                                                 </span>
@@ -152,7 +158,7 @@ const PacienteListPage = () => {
                                 ) : (
                                     <tr>
                                         <td colSpan={5} className="px-6 py-10 text-center text-gray-500 font-worksans">
-                                            No se encontraron pacientes que coincidan con tu búsqueda.
+                                            {loading ? 'Cargando pacientes...' : 'No se encontraron pacientes que coincidan con tu búsqueda.'}
                                         </td>
                                     </tr>
                                 )}
@@ -160,47 +166,23 @@ const PacienteListPage = () => {
                         </table>
                     </div>
 
-                    {/* Pagination */}
-                    <div className="bg-white px-4 py-3 border-t border-gray-200 flex items-center justify-between sm:px-6">
-                        <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-                            <div>
-                                <p className="text-sm text-gray-700 font-worksans">
-                                    Mostrando <span className="font-medium">{startIndex + 1}</span> a <span className="font-medium">{Math.min(startIndex + itemsPerPage, filteredPacientes.length)}</span> de <span className="font-medium">{filteredPacientes.length}</span> resultados
-                                </p>
-                            </div>
-                            <div>
-                                <nav className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
-                                    <button
-                                        onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                                        disabled={currentPage === 1}
-                                        className="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                                    >
-                                        <span className="sr-only">Anterior</span>
-                                        <ChevronLeft className="h-5 w-5" aria-hidden="true" />
-                                    </button>
-                                    {[...Array(totalPages)].map((_, i) => (
-                                        <button
-                                            key={i}
-                                            onClick={() => setCurrentPage(i + 1)}
-                                            className={`relative inline-flex items-center px-4 py-2 border text-sm font-medium ${currentPage === i + 1
-                                                    ? 'z-10 bg-aqua border-aqua text-white'
-                                                    : 'bg-white border-gray-300 text-gray-500 hover:bg-gray-50'
-                                                }`}
-                                        >
-                                            {i + 1}
-                                        </button>
-                                    ))}
-                                    <button
-                                        onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                                        disabled={currentPage === totalPages}
-                                        className="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:opacity-50"
-                                    >
-                                        <span className="sr-only">Siguiente</span>
-                                        <ChevronRight className="h-5 w-5" aria-hidden="true" />
-                                    </button>
-                                </nav>
-                            </div>
-                        </div>
+                    <div className="bg-white px-4 py-3 border-t border-gray-200">
+                        {loading ? (
+                            <div className="text-center py-4 text-gray-500">Cargando...</div>
+                        ) : (
+                            <>
+                                <Pagination
+                                    currentPage={currentPage}
+                                    totalPages={totalPages}
+                                    onPageChange={setCurrentPage}
+                                    hasNext={currentPage < totalPages}
+                                    hasPrevious={currentPage > 1}
+                                />
+                                <div className="text-center mt-2 text-sm text-gray-500 font-worksans">
+                                    Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, totalItems)} de {totalItems} resultados
+                                </div>
+                            </>
+                        )}
                     </div>
                 </div>
             </div>

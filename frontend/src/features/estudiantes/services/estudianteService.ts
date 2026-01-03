@@ -1,8 +1,9 @@
 import api from '../../../services/api';
+import { PaginatedResponse } from '../../../types/common';
 import { Estudiante } from '../types';
 
-export const getEstudiantes = async (): Promise<Estudiante[]> => {
-    const response = await api.get<Estudiante[]>('/users/estudiantes/');
+export const getEstudiantes = async (page: number = 1, search: string = ''): Promise<PaginatedResponse<Estudiante>> => {
+    const response = await api.get<PaginatedResponse<Estudiante>>(`/users/estudiantes/?page=${page}&search=${search}`);
     return response.data;
 };
 

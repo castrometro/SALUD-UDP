@@ -1,8 +1,9 @@
 import api from '../../../services/api';
+import { PaginatedResponse } from '../../../types/common';
 import { Paciente } from '../types';
 
-export const getPacientes = async (): Promise<Paciente[]> => {
-    const response = await api.get<Paciente[]>('/pacientes/');
+export const getPacientes = async (page: number = 1, search: string = ''): Promise<PaginatedResponse<Paciente>> => {
+    const response = await api.get<PaginatedResponse<Paciente>>(`/pacientes/?page=${page}&search=${search}`);
     return response.data;
 };
 
