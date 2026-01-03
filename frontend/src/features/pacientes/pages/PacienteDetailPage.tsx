@@ -26,10 +26,10 @@ const PacienteDetailPage = () => {
         try {
             const [pacienteData, fichasData] = await Promise.all([
                 getPaciente(id),
-                getFichasByPaciente(id)
+                getFichasByPaciente(id, 1, 1000) // Fetch up to 1000 to maintain grouping logic for now
             ]);
             setPaciente(pacienteData);
-            setFichas(fichasData);
+            setFichas(fichasData.results);
         } catch (error) {
             console.error('Error loading data', error);
         } finally {

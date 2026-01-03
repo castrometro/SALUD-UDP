@@ -16,26 +16,53 @@ const EstudianteDetailPage = () => {
     const [activeTab, setActiveTab] = useState<'fichas' | 'casos'>('fichas');
     const [loading, setLoading] = useState(true);
 
+    // Pagination state
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(0);
+
     useEffect(() => {
         if (id) {
             loadData(parseInt(id));
         }
-    }, [id]);
+    }, [id, currentPage]);
 
     const loadData = async (estudianteId: number) => {
         try {
+            // Fetch estudiante only once or if needed, but for simplicity fetch both
+            // Ideally we shouldn't re-fetch estudiante on page change, but it's fine for now
             const [estudianteData, fichasData] = await Promise.all([
                 getEstudiante(estudianteId),
-                getFichasByEstudiante(estudianteId)
+                getFichasByEstudiante(estudianteId, currentPage)
             ]);
             setEstudiante(estudianteData);
-            setFichas(fichasData);
+            setFichas(fichasData.results);
+            setTotalPages(Math.ceil(fichasData.count / 10)); // Assuming page size 10
         } catch (error) {
             console.error('Error loading datas', error);
         } finally {
             setLoading(false);
         }
     };
+
+    // ... (rendering code)
+
+    {/* Tab Content */ }
+    <div className="p-6">
+        {activeTab === 'fichas' ? (
+            <EstudianteFichasTab
+                fichas={fichas}
+                pagination={{
+                    currentPage,
+                    totalPages,
+                    onPageChange: setCurrentPage,
+                    hasNext: currentPage < totalPages,
+                    hasPrevious: currentPage > 1
+                }}
+            />
+        ) : (
+            <EstudianteCasosTab fichas={fichas} />
+        )}
+    </div>
 
     if (loading) {
         return (
@@ -133,8 +160,8 @@ const EstudianteDetailPage = () => {
                                 <button
                                     onClick={() => setActiveTab('fichas')}
                                     className={`w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm flex items-center justify-center gap-2 ${activeTab === 'fichas'
-                                            ? 'border-aqua text-aqua'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-aqua text-aqua'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <FileText className="w-5 h-5" />
@@ -143,8 +170,8 @@ const EstudianteDetailPage = () => {
                                 <button
                                     onClick={() => setActiveTab('casos')}
                                     className={`w-1/2 py-4 px-1 text-center border-b-2 font-medium text-sm flex items-center justify-center gap-2 ${activeTab === 'casos'
-                                            ? 'border-aqua text-aqua'
-                                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                        ? 'border-aqua text-aqua'
+                                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                                         }`}
                                 >
                                     <Users className="w-5 h-5" />
@@ -156,7 +183,16 @@ const EstudianteDetailPage = () => {
                         {/* Tab Content */}
                         <div className="p-6">
                             {activeTab === 'fichas' ? (
-                                <EstudianteFichasTab fichas={fichas} />
+                                <EstudianteFichasTab
+                                    fichas={fichas}
+                                    pagination={{
+                                        currentPage,
+                                        totalPages,
+                                        onPageChange: setCurrentPage,
+                                        hasNext: currentPage < totalPages,
+                                        hasPrevious: currentPage > 1
+                                    }}
+                                />
                             ) : (
                                 <EstudianteCasosTab fichas={fichas} />
                             )}

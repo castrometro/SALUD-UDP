@@ -4,11 +4,20 @@ import { Eye } from 'lucide-react';
 import { FichaAmbulatoria } from '../../fichas/types';
 import { formatRut } from '../../../utils/rut';
 
+import Pagination from '../../../components/ui/Pagination';
+
 interface EstudianteFichasTabProps {
     fichas: FichaAmbulatoria[];
+    pagination?: {
+        currentPage: number;
+        totalPages: number;
+        onPageChange: (page: number) => void;
+        hasNext: boolean;
+        hasPrevious: boolean;
+    };
 }
 
-const EstudianteFichasTab: React.FC<EstudianteFichasTabProps> = ({ fichas }) => {
+const EstudianteFichasTab: React.FC<EstudianteFichasTabProps> = ({ fichas, pagination }) => {
     if (fichas.length === 0) {
         return (
             <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300">
@@ -71,6 +80,18 @@ const EstudianteFichasTab: React.FC<EstudianteFichasTabProps> = ({ fichas }) => 
                     </tbody>
                 </table>
             </div>
+
+            {pagination && (
+                <div className="px-4 py-3 border-t border-gray-200">
+                    <Pagination
+                        currentPage={pagination.currentPage}
+                        totalPages={pagination.totalPages}
+                        onPageChange={pagination.onPageChange}
+                        hasNext={pagination.hasNext}
+                        hasPrevious={pagination.hasPrevious}
+                    />
+                </div>
+            )}
         </div>
     );
 };

@@ -74,8 +74,8 @@ const FichaDetailPage = () => {
         if (!id || estudiantesLoaded) return;
         setEstudiantesLoading(true);
         try {
-            const data = await getFichasEstudiantes(parseInt(id));
-            setFichasEstudiantes(data);
+            const data = await getFichasEstudiantes(parseInt(id), 1, 1000); // Fetch up to 1000 to list all student copies
+            setFichasEstudiantes(data.results);
             setEstudiantesLoaded(true);
         } catch (error) {
             console.error('Error loading fichas estudiantes', error);

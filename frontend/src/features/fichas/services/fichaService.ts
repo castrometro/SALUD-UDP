@@ -1,28 +1,29 @@
 import api from '../../../services/api';
 import { FichaAmbulatoria, FichaHistorial } from '../types';
+import { PaginatedResponse } from '../../../types/common';
 
-export const getFichas = async (): Promise<FichaAmbulatoria[]> => {
-    const response = await api.get<FichaAmbulatoria[]>('/fichas/');
+export const getFichas = async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<FichaAmbulatoria>> => {
+    const response = await api.get<PaginatedResponse<FichaAmbulatoria>>(`/fichas/?page=${page}&page_size=${pageSize}`);
     return response.data;
 };
 
-export const getFichasPlantillas = async (): Promise<FichaAmbulatoria[]> => {
-    const response = await api.get<FichaAmbulatoria[]>('/fichas/', {
-        params: { plantillas: 'true' }
+export const getFichasPlantillas = async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<FichaAmbulatoria>> => {
+    const response = await api.get<PaginatedResponse<FichaAmbulatoria>>('/fichas/', {
+        params: { plantillas: 'true', page, page_size: pageSize }
     });
     return response.data;
 };
 
-export const getFichasByPaciente = async (pacienteId: number): Promise<FichaAmbulatoria[]> => {
-    const response = await api.get<FichaAmbulatoria[]>('/fichas/', {
-        params: { paciente: pacienteId }
+export const getFichasByPaciente = async (pacienteId: number, page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<FichaAmbulatoria>> => {
+    const response = await api.get<PaginatedResponse<FichaAmbulatoria>>('/fichas/', {
+        params: { paciente: pacienteId, page, page_size: pageSize }
     });
     return response.data;
 };
 
-export const getFichasByEstudiante = async (estudianteId: number): Promise<FichaAmbulatoria[]> => {
-    const response = await api.get<FichaAmbulatoria[]>('/fichas/', {
-        params: { estudiante: estudianteId }
+export const getFichasByEstudiante = async (estudianteId: number, page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<FichaAmbulatoria>> => {
+    const response = await api.get<PaginatedResponse<FichaAmbulatoria>>('/fichas/', {
+        params: { estudiante: estudianteId, page, page_size: pageSize }
     });
     return response.data;
 };
@@ -74,8 +75,8 @@ export const getMiFicha = async (fichaBaseId: number): Promise<FichaAmbulatoria 
 };
 
 // Obtener fichas de estudiantes para una plantilla (solo docentes)
-export const getFichasEstudiantes = async (fichaBaseId: number): Promise<FichaAmbulatoria[]> => {
-    const response = await api.get<FichaAmbulatoria[]>(`/fichas/${fichaBaseId}/fichas_estudiantes/`);
+export const getFichasEstudiantes = async (fichaBaseId: number, page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<FichaAmbulatoria>> => {
+    const response = await api.get<PaginatedResponse<FichaAmbulatoria>>(`/fichas/${fichaBaseId}/fichas_estudiantes/?page=${page}&page_size=${pageSize}`);
     return response.data;
 };
 
