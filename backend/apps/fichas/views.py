@@ -132,7 +132,13 @@ class FichaAmbulatoriaViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        fichas = ficha_base.fichas_estudiantes.select_related('estudiante')
+        fichas = ficha_base.fichas_estudiantes.select_related('estudiante').order_by('-fecha_creacion')
+        
+        page = self.paginate_queryset(fichas)
+        if page is not None:
+            serializer = FichaAmbulatoriaSerializer(page, many=True, context={'request': request})
+            return self.get_paginated_response(serializer.data)
+
         serializer = FichaAmbulatoriaSerializer(fichas, many=True, context={'request': request})
         return Response(serializer.data)
     
