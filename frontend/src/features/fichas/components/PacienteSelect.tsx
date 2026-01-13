@@ -22,10 +22,11 @@ const PacienteSelect: React.FC<PacienteSelectProps> = ({ value, onChange, disabl
         const fetchPacientes = async () => {
             setLoading(true);
             try {
-                const data = await getPacientes();
-                setOptions(data);
+                const response = await getPacientes(1, '');
+                const pacientes = response.results || [];
+                setOptions(pacientes);
                 if (value) {
-                    const found = data.find(p => p.id === value);
+                    const found = pacientes.find(p => p.id === value);
                     if (found) setSelectedPaciente(found);
                 }
             } catch (error) {
