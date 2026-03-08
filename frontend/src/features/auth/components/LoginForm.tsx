@@ -31,13 +31,14 @@ export default function LoginForm({ onSuccess }: LoginProps) {
 
             <div>
                 <input
-                    type="text"
-                    id="username" // Keeping id as username for compatibility/autofill
-                    name="username"
+                    type="email"
+                    id="email"
+                    name="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-300 rounded-full focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Nombre de usuario" // Keeping original placeholder
+                    placeholder="Correo electrónico"
+                    autoComplete="email"
                     required
                 />
             </div>
