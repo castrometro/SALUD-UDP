@@ -140,18 +140,98 @@ cd SALUD-UDP
 2. Configurar variables de entorno:
 ```bash
 cp .env.example .env
-# Editar .env con tus configuraciones
+# Editar .env con tus configuraciones locales
 ```
 
 3. Levantar los servicios:
 ```bash
-docker-compose up -d
+docker compose up --build -d
 ```
 
-4. Acceder a la aplicación:
+4. Ejecutar migraciones del backend:
+```bash
+docker compose exec backend python manage.py migrate
+```
+
+5. Crear un superusuario para acceder al admin de Django:
+```bash
+docker compose exec backend python manage.py createsuperuser
+```
+
+6. Acceder a la aplicación:
 - Frontend: http://localhost:8080
 - Backend API: http://localhost:8080/api/
 - Admin Django: http://localhost:8080/admin/
+
+## 💻 Guía para Correr en Local
+
+### Opción recomendada: Docker Compose
+
+1. Crear el archivo de entorno a partir del ejemplo:
+```bash
+cp .env.example .env
+```
+
+2. Verificar o ajustar estas variables mínimas en `.env`:
+```env
+MYSQL_DATABASE=dbficha_dev
+MYSQL_USER=dev_user
+MYSQL_PASSWORD=dev_password
+MYSQL_ROOT_PASSWORD=root_dev_local_2026
+DB_HOST=db
+DB_PORT=3306
+
+DJANGO_DEBUG=True
+DJANGO_SECRET_KEY=django-insecure-local-salud-udp-dev-2026
+DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
+
+VITE_API_URL=/api
+```
+
+3. Levantar el stack:
+```bash
+docker compose up --build -d
+```
+
+4. Ejecutar migraciones:
+```bash
+docker compose exec backend python manage.py migrate
+```
+
+5. Crear un superusuario:
+```bash
+docker compose exec backend python manage.py createsuperuser
+```
+
+6. Validar acceso:
+- Aplicación: http://localhost:8080
+- Django Admin: http://localhost:8080/admin/
+- API: http://localhost:8080/api/
+
+### Comandos útiles
+
+Ver logs:
+```bash
+docker compose logs -f backend
+docker compose logs -f frontend
+docker compose logs -f db
+```
+
+Detener servicios:
+```bash
+docker compose down
+```
+
+Detener y eliminar volúmenes de la base:
+```bash
+docker compose down -v
+```
+
+### Notas de desarrollo
+
+- El proyecto usa Nginx como punto de entrada local en `http://localhost:8080`.
+- El backend corre en `http://localhost:8000` y el frontend Vite en `http://localhost:5173`, pero el flujo recomendado es entrar por Nginx.
+- El formulario de login del frontend autentica con correo electrónico.
 
 ### Usuarios por Defecto
 
