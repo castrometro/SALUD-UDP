@@ -20,3 +20,6 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Copiar el código (aunque se sobreescribe con el volumen en dev)
 COPY . /app/
+
+# Asegurar que el entrypoint tenga permisos de ejecución
+RUN chmod +x /app/entrypoint.sh

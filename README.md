@@ -1,285 +1,179 @@
 # SALUD-UDP - Sistema de Gestión de Fichas Ambulatorias
 
-## 🎯 Idea del Proyecto
+## Idea del Proyecto
 
-**SALUD-UDP** es un sistema de gestión de fichas clínicas ambulatorias desarrollado para la Universidad Diego Portales. El proyecto busca digitalizar y modernizar el manejo de información clínica, permitiendo a estudiantes, docentes y administradores gestionar de manera eficiente los registros de pacientes y sus fichas médicas.
+**SALUD-UDP** es un sistema de gestión de fichas clínicas ambulatorias para la Universidad Diego Portales. Digitaliza el manejo de información clínica, permitiendo a estudiantes, docentes y administradores gestionar registros de pacientes y fichas médicas.
 
-### Objetivos Principales:
+### Objetivos Principales
 - Gestión integral de pacientes con validación de RUT chileno
 - Creación y seguimiento de fichas ambulatorias con campos clínicos completos
-- Sistema de autenticación y autorización basado en roles (Administrador, Docente, Estudiante)
-- Trazabilidad completa de las acciones realizadas en las fichas clínicas
-- Interfaz moderna y responsiva para facilitar el trabajo clínico
+- Autenticación y autorización basada en roles (Admin, Docente, Estudiante)
+- Trazabilidad completa de las acciones realizadas en las fichas
+- Interfaz moderna y responsiva
 
-## 🏗️ Patrón de Diseño
+## Arquitectura
 
-El proyecto implementa un **Monolito Modular**, que combina las ventajas de una arquitectura monolítica con la organización y separación de responsabilidades de los microservicios.
-
-### Características del Patrón:
-
-1. **Backend Modular (Django)**:
-   - **apps/users**: Gestión de usuarios y autenticación con roles diferenciados
-   - **apps/pacientes**: Módulo de gestión de pacientes con validación de datos chilenos
-   - **apps/fichas**: Módulo de fichas ambulatorias con trazabilidad completa
-   - **apps/common**: Utilidades compartidas y validadores
-
-2. **Frontend por Features (React)**:
-   - Organización por características de negocio
-   - Componentes reutilizables y servicios específicos por feature
-   - Separación clara entre lógica de presentación y lógica de negocio
-
-3. **Ventajas del Enfoque**:
-   - Desarrollo y despliegue simplificado
-   - Módulos cohesivos con bajo acoplamiento
-   - Facilita la transición futura a microservicios si es necesario
-   - Código más mantenible y testeable
-
-## 🏛️ Arquitectura
-
-La arquitectura del sistema sigue un modelo de **tres capas con reverse proxy**:
+El proyecto implementa un **Monolito Modular** con 3 contenedores Docker:
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                    NGINX (Puerto 8080)               │
-│                   Reverse Proxy                      │
-└──────────────┬─────────────────────┬─────────────────┘
-               │                     │
-               │ /                   │ /api/, /admin/
-               ▼                     ▼
-┌──────────────────────────┐  ┌──────────────────────┐
-│  Frontend (Puerto 5173)   │  │ Backend (Puerto 8000) │
-│  Vite + React + TypeScript│  │  Django REST Framework│
-│  • React Router           │  │  • JWT Authentication │
-│  • Axios                  │  │  • MySQL Client       │
-│  • TailwindCSS            │  │  • CORS Headers       │
-│  • Lucide Icons           │  │  • Simple JWT         │
-└──────────────────────────┘  └──────────┬────────────┘
-                                         │
-                                         ▼
-                              ┌──────────────────────┐
-                              │   MySQL 8.0 DB       │
-                              │   Base de Datos      │
-                              │   • dbficha_dev      │
-                              └──────────────────────┘
+Browser → localhost:5173 (Vite dev server)
+              ├── /          → React SPA (HMR)
+              ├── /api/*     → proxy → backend:8000 (Django REST)
+              ├── /admin/*   → proxy → backend:8000 (Django Admin)
+              └── /static/*  → proxy → backend:8000
+
+         backend:8000 (Django) ← → db:3306 (MySQL 8.0)
 ```
 
-### Componentes de la Arquitectura:
+Vite actúa como punto de entrada único en desarrollo, usando su proxy integrado para reenviar peticiones al backend. No se usa Nginx en desarrollo.
 
-1. **Capa de Presentación (Frontend)**:
-   - Framework: React 18 con TypeScript
-   - Build Tool: Vite para desarrollo rápido y HMR
-   - Estilos: TailwindCSS para diseño responsive
-   - Comunicación: Axios para llamadas HTTP al backend
+### Backend Modular (Django)
+| App | Responsabilidad |
+|-----|----------------|
+| `apps/users` | Usuarios, autenticación JWT, roles |
+| `apps/pacientes` | Gestión de pacientes, validación RUT |
+| `apps/fichas` | Fichas ambulatorias, plantillas, historial |
+| `apps/common` | Validadores compartidos (RUT chileno) |
 
-2. **Capa de Lógica de Negocio (Backend)**:
-   - Framework: Django 5.1.4 con Django REST Framework
-   - Autenticación: JWT (JSON Web Tokens) con Simple JWT
-   - Base de Datos: MySQL 8.0 con mysqlclient
-   - API RESTful con endpoints para usuarios, pacientes y fichas
+### Frontend por Features (React)
+| Feature | Responsabilidad |
+|---------|----------------|
+| `features/auth` | Login, contexto de autenticación, protección de rutas |
+| `features/pacientes` | CRUD de pacientes, detalle con fichas asociadas |
+| `features/fichas` | Plantillas, fichas de estudiante, historial de versiones |
+| `features/estudiantes` | Gestión de estudiantes (vista docente/admin) |
 
-3. **Capa de Datos**:
-   - Motor: MySQL 8.0
-   - Persistencia: Volúmenes Docker para datos persistentes
-   - Migraciones: Django ORM para gestión de esquema
+## Stack Tecnológico
 
-4. **Capa de Proxy**:
-   - Nginx Alpine para enrutamiento
-   - Gestión de CORS y headers
-   - Separación de rutas frontend/backend
+| Capa | Tecnología |
+|------|-----------|
+| Frontend | React 18, TypeScript 5, Vite 5, TailwindCSS 3, Axios, React Router 6, Lucide Icons |
+| Backend | Django 5.1, Django REST Framework 3.15, SimpleJWT, python-decouple |
+| Base de Datos | MySQL 8.0 |
+| Testing | pytest, pytest-django, factory-boy, Faker |
+| Infraestructura | Docker, Docker Compose |
 
-## 🛠️ Stack Tecnológico
-
-### Backend
-- **Framework**: Django 5.1.4
-- **API**: Django REST Framework 3.15.2
-- **Autenticación**: djangorestframework-simplejwt 5.4.0
-- **Base de Datos**: MySQL 8.0 + mysqlclient 2.2.4
-- **CORS**: django-cors-headers 4.6.0
-- **Configuración**: python-decouple 3.8
-- **Lenguaje**: Python 3.x
-
-### Frontend
-- **Framework**: React 18.2.0
-- **Lenguaje**: TypeScript 5.2.2
-- **Build Tool**: Vite 5.1.4
-- **Routing**: React Router DOM 6.30.2
-- **HTTP Client**: Axios 1.13.2
-- **Estilos**: TailwindCSS 3.4.1 + PostCSS 8.4.35
-- **Iconos**: Lucide React 0.330.0
-- **Utilidades**: clsx 2.1.0, tailwind-merge 2.2.1
-
-### Base de Datos
-- **Motor**: MySQL 8.0
-- **Configuración**: Contenedor Docker con volúmenes persistentes
-
-### Infraestructura
-- **Contenedorización**: Docker + Docker Compose 3.8
-- **Reverse Proxy**: Nginx Alpine
-- **Red**: Docker Bridge Network (clinica_net)
-
-### Herramientas de Desarrollo
-- **Linting (Frontend)**: ESLint
-- **Compilador**: TypeScript Compiler
-- **Hot Reload**: Vite HMR
-- **Variables de Entorno**: .env files
-
-## 🚀 Inicio Rápido
+## Inicio Rápido
 
 ### Prerrequisitos
 - Docker y Docker Compose instalados
-- Puertos 8080, 8000, 3000, 5173 disponibles
+- Puerto **5173** disponible
 
-### Configuración
+### 3 pasos para correr el proyecto
 
-1. Clonar el repositorio:
 ```bash
+# 1. Clonar
 git clone https://github.com/castrometro/SALUD-UDP.git
 cd SALUD-UDP
-```
 
-2. Configurar variables de entorno:
-```bash
+# 2. Configurar entorno
 cp .env.example .env
-# Editar .env con tus configuraciones locales
-```
 
-3. Levantar los servicios:
-```bash
+# 3. Levantar
 docker compose up --build -d
 ```
 
-4. Ejecutar migraciones del backend:
-```bash
-docker compose exec backend python manage.py migrate
-```
+Listo. Las migraciones corren automáticamente via `entrypoint.sh`.  
+Abrir **http://localhost:5173**
 
-5. Crear un superusuario para acceder al admin de Django:
+### Crear un superusuario
+
 ```bash
 docker compose exec backend python manage.py createsuperuser
 ```
 
-6. Acceder a la aplicación:
-- Frontend: http://localhost:8080
-- Backend API: http://localhost:8080/api/
-- Admin Django: http://localhost:8080/admin/
-
-## 💻 Guía para Correr en Local
-
-### Opción recomendada: Docker Compose
-
-1. Crear el archivo de entorno a partir del ejemplo:
-```bash
-cp .env.example .env
-```
-
-2. Verificar o ajustar estas variables mínimas en `.env`:
-```env
-MYSQL_DATABASE=dbficha_dev
-MYSQL_USER=dev_user
-MYSQL_PASSWORD=dev_password
-MYSQL_ROOT_PASSWORD=root_dev_local_2026
-DB_HOST=db
-DB_PORT=3306
-
-DJANGO_DEBUG=True
-DJANGO_SECRET_KEY=django-insecure-local-salud-udp-dev-2026
-DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1
-
-VITE_API_URL=/api
-```
-
-3. Levantar el stack:
-```bash
-docker compose up --build -d
-```
-
-4. Ejecutar migraciones:
-```bash
-docker compose exec backend python manage.py migrate
-```
-
-5. Crear un superusuario:
-```bash
-docker compose exec backend python manage.py createsuperuser
-```
-
-6. Validar acceso:
-- Aplicación: http://localhost:8080
-- Django Admin: http://localhost:8080/admin/
-- API: http://localhost:8080/api/
+Luego acceder al admin en http://localhost:5173/admin/
 
 ### Comandos útiles
 
-Ver logs:
 ```bash
+# Ver logs en tiempo real
 docker compose logs -f backend
 docker compose logs -f frontend
-docker compose logs -f db
+
+# Reiniciar todo
+docker compose down && docker compose up -d
+
+# Reset completo (borra la BD)
+docker compose down -v && docker compose up --build -d
+
+# Correr tests
+docker compose exec backend pytest
 ```
 
-Detener servicios:
-```bash
-docker compose down
-```
-
-Detener y eliminar volúmenes de la base:
-```bash
-docker compose down -v
-```
-
-### Notas de desarrollo
-
-- El proyecto usa Nginx como punto de entrada local en `http://localhost:8080`.
-- El backend corre en `http://localhost:8000` y el frontend Vite en `http://localhost:5173`, pero el flujo recomendado es entrar por Nginx.
-- El formulario de login del frontend autentica con correo electrónico.
-
-### Usuarios por Defecto
-
-El sistema maneja tres tipos de roles:
-- **ADMIN**: Administrador del sistema
-- **DOCENTE**: Docentes supervisores
-- **ESTUDIANTE**: Estudiantes usuarios del sistema
-
-## 📁 Estructura del Proyecto
+## Estructura del Proyecto
 
 ```
 SALUD-UDP/
+├── docker-compose.yml          # Orquestación (db, backend, frontend)
+├── .env.example                # Variables de entorno (copiar a .env)
+├── README.md
+│
 ├── backend/
+│   ├── Dockerfile
+│   ├── entrypoint.sh           # Migrate automático + runserver
+│   ├── requirements.txt
+│   ├── manage.py
+│   ├── pytest.ini
+│   ├── config/
+│   │   ├── settings.py         # Configuración principal
+│   │   ├── test_settings.py    # Settings para tests (SQLite)
+│   │   └── urls.py             # Rutas raíz de la API
 │   ├── apps/
-│   │   ├── users/          # Gestión de usuarios y autenticación
-│   │   ├── pacientes/      # Gestión de pacientes
-│   │   ├── fichas/         # Fichas ambulatorias
-│   │   └── common/         # Validadores y utilidades
-│   ├── config/             # Configuración Django
-│   ├── requirements.txt    # Dependencias Python
-│   └── Dockerfile
+│   │   ├── common/             # Validadores compartidos
+│   │   ├── users/              # Usuarios y autenticación
+│   │   ├── pacientes/          # Gestión de pacientes
+│   │   └── fichas/             # Fichas clínicas
+│   └── utils/
+│       └── pagination.py       # Paginación estándar DRF
+│
 ├── frontend/
-│   ├── src/
-│   │   ├── components/     # Componentes reutilizables
-│   │   ├── features/       # Features por módulo
-│   │   ├── pages/          # Páginas principales
-│   │   ├── services/       # Servicios API
-│   │   └── utils/          # Utilidades
-│   ├── package.json        # Dependencias Node
-│   └── Dockerfile
-├── nginx/
-│   └── default.conf        # Configuración Nginx
-├── docker-compose.yml      # Orquestación de servicios
-└── .env.example           # Variables de entorno ejemplo
+│   ├── Dockerfile
+│   ├── package.json
+│   ├── vite.config.ts          # Proxy /api → backend:8000
+│   ├── tsconfig.json
+│   ├── tailwind.config.js
+│   └── src/
+│       ├── App.tsx             # Rutas y layout principal
+│       ├── services/api.ts     # Axios con interceptores JWT
+│       ├── components/         # Componentes compartidos (Header, Layout, etc.)
+│       ├── features/
+│       │   ├── auth/           # Login, AuthContext, protección de rutas
+│       │   ├── pacientes/      # Pages y services de pacientes
+│       │   ├── fichas/         # Pages, components y services de fichas
+│       │   └── estudiantes/    # Pages, components y services de estudiantes
+│       └── utils/rut.ts        # Validación de RUT en frontend
+│
+├── nginx/                      # Config Nginx (solo producción futura)
+│   └── default.conf
+│
+└── Docs/                       # Documentación del sistema
+    └── documentacion del sistema/
+        ├── workflows.md
+        ├── REQUERIMIENTOS_FICHAS_SIMULACION.md
+        ├── backend/apps/       # Docs por app Django
+        └── frontend/features/  # Docs por feature React
 ```
 
-## 🔒 Seguridad
+## Variables de Entorno
 
-- Autenticación basada en JWT con tokens de acceso y refresh
-- Validación de RUT chileno en modelos de Usuario y Paciente
-- CORS configurado para dominios específicos
-- Variables de entorno para datos sensibles
-- Separación de credenciales de desarrollo y producción
+El archivo `.env.example` contiene todos los valores necesarios para desarrollo. No requiere modificación para correr local:
 
-## 📝 Licencia
+| Variable | Valor por defecto | Descripción |
+|----------|------------------|-------------|
+| `MYSQL_DATABASE` | `dbficha_dev` | Nombre de la BD |
+| `MYSQL_USER` | `dev_user` | Usuario MySQL |
+| `MYSQL_PASSWORD` | `dev_password` | Password MySQL |
+| `MYSQL_ROOT_PASSWORD` | `root_password` | Password root MySQL |
+| `DB_HOST` | `db` | Host de BD (nombre del contenedor) |
+| `DB_PORT` | `3306` | Puerto MySQL |
+| `DJANGO_DEBUG` | `True` | Modo debug de Django |
+| `DJANGO_SECRET_KEY` | `django-insecure-...` | Clave secreta (cambiar en prod) |
 
-Este proyecto es desarrollado para uso académico en la Universidad Diego Portales.
+## Roles del Sistema
 
-## 👥 Contribuciones
-
-Para contribuir al proyecto, por favor contacta con el equipo de desarrollo de la UDP.
+| Rol | Puede |
+|-----|-------|
+| **ADMIN** | Todo. Acceso a Django Admin. |
+| **DOCENTE** | Crear pacientes, crear plantillas de fichas, ver fichas de estudiantes, ver historial. |
+| **ESTUDIANTE** | Ver pacientes, clonar plantillas a su propia ficha, editar sus fichas. |

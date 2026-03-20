@@ -1,25 +1,46 @@
 # Documentación del Módulo: Pacientes (Backend)
 
 ## Propósito
-Gestiona la base de datos de los pacientes que son atendidos en el contexto clínico. Es una información sensible y central para la creación de fichas.
+Gestiona la base de datos de pacientes clínicos. Es central para la creación de fichas ya que toda ficha está asociada a un paciente.
 
 ## Modelos (`models.py`)
 
 ### `Paciente`
-Representa al paciente clínico.
-- **RUT**: Identificador único.
-- **Datos Demográficos**: Nombre, Apellido, Fecha de Nacimiento, Domicilio.
-- **Previsión**: Fonasa/Isapre/Particular.
 
-Lógica importante:
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `rut` | CharField (unique) | RUT chileno validado por módulo 11 |
+| `nombre` | CharField | Nombre del paciente |
+| `apellido` | CharField | Apellido del paciente |
+| `prevision` | CharField | FONASA / ISAPRE / PARTICULAR |
+| `correo` | EmailField | Opcional |
+| `numero_telefono` | CharField | Opcional |
+| `fecha_nacimiento` | DateField | Requerido |
+| `domicilio` | CharField | Opcional |
+| `created_at` | DateTimeField | Auto |
+| `updated_at` | DateTimeField | Auto |
+
+**Lógica clave:**
 - `edad`: Property calculada dinámicamente desde `fecha_nacimiento`.
+- `save()`: Formatea el RUT automáticamente al guardar (ej. `12.345.678-9`).
 
-## Vistas y API (`views.py`)
-Utiliza `ModelViewSet` estándar de DRF.
-- GET `/api/pacientes/`: Lista paginada de pacientes.
-- GET `/api/pacientes/?search=...`: Búsqueda por RUT o nombre.
-- POST `/api/pacientes/`: Creación de nuevo paciente.
+## Serializer (`serializers.py`)
+- `PacienteSerializer`: Serializa todos los campos + `edad` como campo de solo lectura.
+
+## Vistas (`views.py`)
+- `PacienteViewSet`: ModelViewSet estándar con búsqueda y permisos por acción.
+
+## Endpoints
+
+| Método | Endpoint | Rol requerido | Descripción |
+|--------|----------|---------------|-------------|
+| GET | `/api/pacientes/` | Autenticado | Lista paginada |
+| GET | `/api/pacientes/?search=...` | Autenticado | Búsqueda por nombre, apellido o RUT |
+| GET | `/api/pacientes/{id}/` | Autenticado | Detalle |
+| POST | `/api/pacientes/` | Docente/Admin | Crear paciente |
+| PUT | `/api/pacientes/{id}/` | Docente/Admin | Actualizar |
+| DELETE | `/api/pacientes/{id}/` | Docente/Admin | Eliminar |
 
 ## Permisos
-- **Lectura**: Docentes y Estudiantes.
-- **Escritura (Crear/Editar)**: Generalmente restringido a Docentes o Administrativos (verificar `permissions.py` en implementación final).
+- **Lectura**: Cualquier usuario autenticado (estudiantes necesitan ver pacientes para acceder a fichas).
+- **Escritura**: Solo `IsDocenteOrAdmin`.
