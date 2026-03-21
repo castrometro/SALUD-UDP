@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider, useAuth } from './features/auth/context/AuthContext';
 import LoginPage from './features/auth/pages/LoginPage';
 import HomePage from './pages/HomePage';
-import MenuUsuario from './components/MenuUsuario';
+import MenuUsuarioPage from './pages/MenuUsuarioPage';
 import Layout from './components/Layout';
 import PacienteListPage from './features/pacientes/pages/PacienteListPage';
 import PacienteFormPage from './features/pacientes/pages/PacienteFormPage';
@@ -32,21 +32,14 @@ function App() {
                     <Route path="/login" element={<LoginPage />} />
 
                     <Route
-                        path="/menu-usuario"
-                        element={
-                            <PrivateRoute>
-                                <MenuUsuario />
-                            </PrivateRoute>
-                        }
-                    />
-
-                    <Route
                         element={
                             <PrivateRoute>
                                 <Layout />
                             </PrivateRoute>
                         }
                     >
+                        <Route path="menu-usuario" element={<MenuUsuarioPage />} />
+
                         {/* Pacientes */}
                         <Route path="pacientes" element={<PacienteListPage />} />
                         <Route path="pacientes/nuevo" element={<PacienteFormPage />} />

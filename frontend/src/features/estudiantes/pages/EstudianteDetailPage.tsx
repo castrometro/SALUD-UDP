@@ -46,7 +46,7 @@ const EstudianteDetailPage = () => {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-beige flex items-center justify-center">
+            <div className="bg-beige flex items-center justify-center py-20">
                 <div className="text-center">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-aqua mx-auto"></div>
                     <p className="mt-4 text-gray-600 font-worksans">Cargando estudiante...</p>
@@ -57,7 +57,7 @@ const EstudianteDetailPage = () => {
 
     if (!estudiante) {
         return (
-            <div className="min-h-screen bg-beige flex items-center justify-center">
+            <div className="bg-beige flex items-center justify-center py-20">
                 <div className="text-center">
                     <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
                     <h2 className="text-xl font-semibold text-gray-900 mb-2">Estudiante no encontrado</h2>
@@ -71,7 +71,7 @@ const EstudianteDetailPage = () => {
     }
 
     return (
-        <div className="min-h-screen bg-beige pb-12">
+        <div className="bg-beige pb-12">
             {/* Top Navigation */}
             <div className="bg-white shadow-sm border-b border-gray-200 mb-8">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">

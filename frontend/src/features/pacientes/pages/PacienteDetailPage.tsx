@@ -41,7 +41,7 @@ const PacienteDetailPage = () => {
     if (!paciente) return <div className="p-8 text-center">Paciente no encontrado</div>;
 
     return (
-        <div className="min-h-screen bg-beige pb-12">
+        <div className="bg-beige pb-12">
             {/* Top Navigation */}
             <div className="bg-white shadow-sm border-b border-gray-200">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
@@ -79,9 +79,12 @@ const PacienteDetailPage = () => {
                             </div>
                         </div>
                         <div className="flex gap-3">
-                            <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors font-worksans">
-                                Editar Perfil
-                            </button>
+                            <Link
+                                to={`/pacientes/${paciente.id}/editar`}
+                                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50 transition-colors font-worksans"
+                            >
+                                Editar Paciente
+                            </Link>
                             <Link
                                 to={`/fichas/nueva?paciente=${paciente.id}`}
                                 className="px-4 py-2 bg-aqua text-white rounded-lg font-medium hover:bg-blue-600 transition-colors shadow-sm flex items-center gap-2 font-worksans"
