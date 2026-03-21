@@ -104,21 +104,21 @@ const PacienteDetailPage = () => {
                             <Mail className="w-5 h-5 text-gray-400 mt-0.5" />
                             <div>
                                 <p className="text-sm text-gray-500 font-worksans">Correo Electrónico</p>
-                                <p className="font-medium text-gray-900 font-worksans">{paciente.correo}</p>
+                                <p className="font-medium text-gray-900 font-worksans">{paciente.correo || <span className="text-gray-400 italic">No registrado</span>}</p>
                             </div>
                         </div>
                         <div className="flex items-start gap-3">
                             <Phone className="w-5 h-5 text-gray-400 mt-0.5" />
                             <div>
                                 <p className="text-sm text-gray-500 font-worksans">Teléfono</p>
-                                <p className="font-medium text-gray-900 font-worksans">{paciente.numero_telefono}</p>
+                                <p className="font-medium text-gray-900 font-worksans">{paciente.numero_telefono || <span className="text-gray-400 italic">No registrado</span>}</p>
                             </div>
                         </div>
                         <div className="flex items-start gap-3">
                             <MapPin className="w-5 h-5 text-gray-400 mt-0.5" />
                             <div>
                                 <p className="text-sm text-gray-500 font-worksans">Domicilio</p>
-                                <p className="font-medium text-gray-900 font-worksans">{paciente.domicilio}</p>
+                                <p className="font-medium text-gray-900 font-worksans">{paciente.domicilio || <span className="text-gray-400 italic">No registrado</span>}</p>
                             </div>
                         </div>
                     </div>
