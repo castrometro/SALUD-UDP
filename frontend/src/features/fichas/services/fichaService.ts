@@ -1,6 +1,6 @@
-import api from '../../../services/api';
+import api from '@/services/api';
 import { FichaAmbulatoria, FichaHistorial } from '../types';
-import { PaginatedResponse } from '../../../types/common';
+import { PaginatedResponse } from '@/types/common';
 
 export const getFichas = async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<FichaAmbulatoria>> => {
     const response = await api.get<PaginatedResponse<FichaAmbulatoria>>(`/fichas/?page=${page}&page_size=${pageSize}`);

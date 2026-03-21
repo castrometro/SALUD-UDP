@@ -47,7 +47,7 @@ Vite actúa como punto de entrada único en desarrollo, usando su proxy integrad
 
 | Capa | Tecnología |
 |------|-----------|
-| Frontend | React 18, TypeScript 5, Vite 5, TailwindCSS 3, Axios, React Router 6, Lucide Icons |
+| Frontend | React 18, TypeScript 5, Vite 5, TailwindCSS 3, Axios, React Router 6, Lucide Icons, ESLint |
 | Backend | Django 5.1, Django REST Framework 3.15, SimpleJWT, python-decouple |
 | Base de Datos | MySQL 8.0 |
 | Testing | pytest, pytest-django, factory-boy, Faker |
@@ -97,8 +97,11 @@ docker compose down && docker compose up -d
 # Reset completo (borra la BD)
 docker compose down -v && docker compose up --build -d
 
-# Correr tests
+# Correr tests (backend)
 docker compose exec backend pytest
+
+# Lint frontend
+docker compose exec frontend npm run lint
 ```
 
 ## Estructura del Proyecto
@@ -130,13 +133,15 @@ SALUD-UDP/
 ├── frontend/
 │   ├── Dockerfile
 │   ├── package.json
-│   ├── vite.config.ts          # Proxy /api → backend:8000
-│   ├── tsconfig.json
+│   ├── .eslintrc.cjs          # ESLint config (TS + React hooks)
+│   ├── vite.config.ts          # Proxy /api → backend:8000, alias @/ → src/
+│   ├── tsconfig.json           # Path alias @/* → src/*
 │   ├── tailwind.config.js
 │   └── src/
 │       ├── App.tsx             # Rutas y layout principal
-│       ├── services/api.ts     # Axios con interceptores JWT
-│       ├── components/         # Componentes compartidos (Header, Layout, etc.)
+│       ├── services/api.ts     # Axios con interceptores JWT (tipado AxiosError)
+│       ├── types/common.ts     # PaginatedResponse genérico
+│       ├── components/         # Componentes compartidos (Header, Layout, Pagination, etc.)
 │       ├── features/
 │       │   ├── auth/           # Login, AuthContext, protección de rutas
 │       │   ├── pacientes/      # Pages y services de pacientes
@@ -169,6 +174,7 @@ El archivo `.env.example` contiene todos los valores necesarios para desarrollo.
 | `DB_PORT` | `3306` | Puerto MySQL |
 | `DJANGO_DEBUG` | `True` | Modo debug de Django |
 | `DJANGO_SECRET_KEY` | `django-insecure-...` | Clave secreta (cambiar en prod) |
+| `VITE_API_URL` | (no requerida) | URL base de la API para el frontend. En Docker, el proxy de Vite maneja `/api` → `backend:8000`, por lo que no se necesita |
 
 ## Roles del Sistema
 

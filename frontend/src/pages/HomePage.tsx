@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import { useRef, type RefObject } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
@@ -8,18 +8,18 @@ import { useAuth } from '../features/auth/context/AuthContext';
 const cards = [
   {
     title: "Sobre el Proyecto",
-    text: "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim",
-    link: "/sobre-el-proyecto"
+    text: "La Clínica de Simulación UDP es una plataforma digital diseñada para apoyar la formación clínica de estudiantes de la Facultad de Salud y Odontología. Permite a docentes crear casos clínicos que los estudiantes completan de forma independiente, facilitando el aprendizaje práctico en un entorno seguro y supervisado.",
+    link: "#proyecto"
   },
   {
     title: "Seguridad de la información",
-    text: "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim",
-    link: "/seguridad-informacion"
+    text: "Toda la información de pacientes y fichas clínicas está protegida mediante autenticación segura con tokens JWT, control de acceso basado en roles (administrador, docente, estudiante) y cifrado en tránsito. El sistema cumple con las políticas de protección de datos personales de la Universidad Diego Portales.",
+    link: "#seguridad"
   },
   {
     title: "Ayuda",
-    text: "Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim. Lorem ipsum dolor sit amet, consectetuer adipiscing elit. Aenean commodo ligula eget dolor. Aenean massa. Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus. Donec quam felis, ultricies nec, pellentesque eu, pretium quis, sem. Nulla consequat massa quis enim",
-    link: "/ayuda"
+    text: "Si necesitas asistencia técnica o tienes dudas sobre el uso de la plataforma, contacta al equipo de soporte a través del Laboratorio de Tecnologías Educativas (LaTe). Para problemas de acceso, verifica tus credenciales o solicita una nueva contraseña a tu docente o administrador del sistema.",
+    link: "#ayuda"
   }
 ];
 
@@ -30,7 +30,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
 
-  const scrollToSection = (ref: React.RefObject<HTMLDivElement>) => {
+  const scrollToSection = (ref: RefObject<HTMLDivElement>) => {
     ref.current?.scrollIntoView({ behavior: 'smooth' });
   };
 

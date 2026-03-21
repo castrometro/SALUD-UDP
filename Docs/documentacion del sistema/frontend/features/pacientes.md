@@ -35,7 +35,7 @@ features/pacientes/
 - Tabla con columnas: nombre, RUT, previsión, acciones.
 - Búsqueda con debounce de 500ms (resetea a página 1).
 - Paginación.
-- Botones: ver detalle, editar.
+- Botones: ver detalle, editar, eliminar (con `window.confirm`).
 
 ### `PacienteFormPage.tsx`
 - Crear o editar paciente.
@@ -46,7 +46,7 @@ features/pacientes/
 ### `PacienteDetailPage.tsx`
 - Tarjeta con avatar (iniciales), RUT, previsión, datos de contacto.
 - Historial clínico agrupado por ficha base:
-  - Plantillas con borde púrpura.
+  - Plantillas con borde púrpura. Muestra `contenido?.motivo_consulta` y `contenido?.diagnostico`.
   - Copias de estudiantes anidadas con badges verdes.
 - Botón "Nueva Ficha" enlaza a `/fichas/nueva?paciente={id}`.
 

@@ -63,3 +63,5 @@ Definida en `App.tsx` con el componente `PrivateRoute`:
 ## Interceptor de tokens (`services/api.ts`)
 - **Request**: Inyecta `Authorization: Bearer <token>` en cada petición.
 - **Response 401**: Intenta refresh automático con el refresh token. Si falla, limpia sesión y redirige a `/login`.
+- Usa tipado explícito `AxiosError`, `InternalAxiosRequestConfig` para seguridad de tipos.
+- Guarda `error.response?.status` con optional chaining para evitar crash en errores de red.

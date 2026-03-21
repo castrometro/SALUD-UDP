@@ -7,7 +7,7 @@ import { FichaAmbulatoria } from '../../fichas/types';
 import EstudianteFichasTab from '../components/EstudianteFichasTab';
 import EstudianteCasosTab from '../components/EstudianteCasosTab';
 import { ChevronLeft, Mail, CreditCard, User, AlertCircle, FileText, Users } from 'lucide-react';
-import { formatRut } from '../../../utils/rut';
+import { formatRut } from '@/utils/rut';
 
 const EstudianteDetailPage = () => {
     const { id } = useParams<{ id: string }>();
@@ -43,26 +43,6 @@ const EstudianteDetailPage = () => {
             setLoading(false);
         }
     };
-
-    // ... (rendering code)
-
-    {/* Tab Content */ }
-    <div className="p-6">
-        {activeTab === 'fichas' ? (
-            <EstudianteFichasTab
-                fichas={fichas}
-                pagination={{
-                    currentPage,
-                    totalPages,
-                    onPageChange: setCurrentPage,
-                    hasNext: currentPage < totalPages,
-                    hasPrevious: currentPage > 1
-                }}
-            />
-        ) : (
-            <EstudianteCasosTab fichas={fichas} />
-        )}
-    </div>
 
     if (loading) {
         return (

@@ -1,10 +1,10 @@
-import React from 'react';
+import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye } from 'lucide-react';
 import { FichaAmbulatoria } from '../../fichas/types';
-import { formatRut } from '../../../utils/rut';
+import { formatRut } from '@/utils/rut';
 
-import Pagination from '../../../components/ui/Pagination';
+import Pagination from '@/components/ui/Pagination';
 
 interface EstudianteFichasTabProps {
     fichas: FichaAmbulatoria[];
@@ -17,7 +17,7 @@ interface EstudianteFichasTabProps {
     };
 }
 
-const EstudianteFichasTab: React.FC<EstudianteFichasTabProps> = ({ fichas, pagination }) => {
+const EstudianteFichasTab: FC<EstudianteFichasTabProps> = ({ fichas, pagination }) => {
     if (fichas.length === 0) {
         return (
             <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300">
@@ -63,8 +63,8 @@ const EstudianteFichasTab: React.FC<EstudianteFichasTabProps> = ({ fichas, pagin
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <div className="text-sm text-gray-900 font-worksans truncate max-w-xs" title={ficha.diagnostico}>
-                                        {ficha.diagnostico || <span className="text-gray-400 italic">Sin diagnóstico</span>}
+                                    <div className="text-sm text-gray-900 font-worksans truncate max-w-xs" title={ficha.contenido?.diagnostico}>
+                                        {ficha.contenido?.diagnostico || <span className="text-gray-400 italic">Sin diagnóstico</span>}
                                     </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

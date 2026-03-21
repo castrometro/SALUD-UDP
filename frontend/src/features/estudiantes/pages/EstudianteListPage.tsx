@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Estudiante } from '../types';
-import { getEstudiantes } from '../services/estudianteService';
+import { getEstudiantes, deleteEstudiante } from '../services/estudianteService';
 import { Search, Plus, Edit2, Trash2, Eye } from 'lucide-react';
-import { formatRut } from '../../../utils/rut';
-import Pagination from '../../../components/ui/Pagination';
+import { formatRut } from '@/utils/rut';
+import Pagination from '@/components/ui/Pagination';
 
 const EstudianteListPage = () => {
     const [estudiantes, setEstudiantes] = useState<Estudiante[]>([]);
@@ -42,6 +42,16 @@ const EstudianteListPage = () => {
             console.error('Error loading estudiantes', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    const handleDelete = async (estudiante: Estudiante) => {
+        if (!window.confirm(`¿Estás seguro de eliminar al estudiante ${estudiante.first_name} ${estudiante.last_name}?`)) return;
+        try {
+            await deleteEstudiante(estudiante.id);
+            loadEstudiantes();
+        } catch (_error) {
+            console.error('Error eliminando estudiante', _error);
         }
     };
 
@@ -136,7 +146,10 @@ const EstudianteListPage = () => {
                                                     <Link to={`/estudiantes/${estudiante.id}/editar`} className="text-gray-400 hover:text-amber-500 transition-colors">
                                                         <Edit2 className="w-5 h-5" />
                                                     </Link>
-                                                    <button className="text-gray-400 hover:text-red-600 transition-colors">
+                                                    <button
+                                                        onClick={() => handleDelete(estudiante)}
+                                                        className="text-gray-400 hover:text-red-600 transition-colors"
+                                                    >
                                                         <Trash2 className="w-5 h-5" />
                                                     </button>
                                                 </div>

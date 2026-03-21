@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { Paciente } from '../types';
 import { createPaciente, getPaciente, updatePaciente } from '../services/pacienteService';
-import { formatRut, validateRut } from '../../../utils/rut';
+import { formatRut, validateRut } from '@/utils/rut';
 
 const PacienteFormPage = () => {
     const navigate = useNavigate();
@@ -36,7 +36,7 @@ const PacienteFormPage = () => {
         }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
         if (name === 'rut') {
             setFormData(prev => ({ ...prev, [name]: formatRut(value) }));
@@ -45,7 +45,7 @@ const PacienteFormPage = () => {
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         if (!validateRut(formData.rut)) {
             alert('El RUT ingresado no es válido');

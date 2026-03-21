@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
     User, Phone, Mail, MapPin, Calendar, Activity,
     FileText, Plus, Clock, ChevronLeft
 } from 'lucide-react';
-import { formatRut } from '../../../utils/rut';
+import { formatRut } from '@/utils/rut';
 import { Paciente } from '../types';
 import { FichaAmbulatoria } from '../../fichas/types';
 import { getPaciente } from '../services/pacienteService';
@@ -159,10 +159,10 @@ const PacienteDetailPage = () => {
                                                             </span>
                                                         </div>
                                                         <h3 className="text-lg font-bold text-gray-900 font-arizona mb-1">
-                                                            {baseFicha.motivo_consulta}
+                                                            {baseFicha.contenido?.motivo_consulta}
                                                         </h3>
                                                         <p className="text-gray-600 font-worksans text-sm line-clamp-2">
-                                                            Diagnóstico Base: <span className="font-medium text-gray-900">{baseFicha.diagnostico}</span>
+                                                            Diagnóstico Base: <span className="font-medium text-gray-900">{baseFicha.contenido?.diagnostico}</span>
                                                         </p>
                                                     </div>
 
@@ -240,7 +240,7 @@ const PacienteDetailPage = () => {
                                                             </span>
                                                         </div>
                                                         <h3 className="text-lg font-bold text-gray-900 font-arizona">
-                                                            {ficha.motivo_consulta}
+                                                            {ficha.contenido?.motivo_consulta}
                                                         </h3>
                                                     </div>
                                                     <Link

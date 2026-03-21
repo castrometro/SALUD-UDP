@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -13,7 +13,7 @@ export default function LoginForm({ onSuccess }: LoginProps) {
     const [errorMessage, setErrorMessage] = useState('');
     const { login, isLoading } = useAuth();
 
-    const handleLogin = async (e: React.FormEvent) => {
+    const handleLogin = async (e: FormEvent) => {
         e.preventDefault();
         setErrorMessage('');
 
@@ -76,7 +76,7 @@ export default function LoginForm({ onSuccess }: LoginProps) {
                     </label>
                 </div>
 
-                <a href="/recuperar-password" className="text-blue-600 hover:text-blue-500">
+                <a href="#" className="text-blue-600 hover:text-blue-500 pointer-events-none opacity-50">
                     ¿Olvidó su contraseña?
                 </a>
             </div>

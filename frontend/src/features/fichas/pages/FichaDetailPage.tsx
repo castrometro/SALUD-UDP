@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, type ChangeEvent } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ChevronLeft, AlertCircle, History, Users, FileText, Copy, ClipboardList, Eye, RotateCcw } from 'lucide-react';
 import { FichaAmbulatoria, FichaHistorial } from '../types';
@@ -120,9 +120,12 @@ const FichaDetailPage = () => {
         }
     };
 
-    const handleInputChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const handleInputChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
         const { name, value } = e.target;
-        setEditableFicha(prev => prev ? { ...prev, [name]: value } : null);
+        setEditableFicha(prev => prev ? {
+            ...prev,
+            contenido: { ...prev.contenido, [name]: value },
+        } : null);
     };
 
     const handleEditToggle = () => {
@@ -374,7 +377,7 @@ const FichaDetailPage = () => {
                                                 Visualizando Versión {selectedVersion.version}
                                             </span>
                                             <p className="text-sm text-amber-600 font-worksans">
-                                                Modificado por {selectedVersion.modificado_por_nombre || 'Desconocido'} el {new Date(selectedVersion.fecha).toLocaleString()}
+                                                Modificado por {selectedVersion.autor_nombre || 'Desconocido'} el {new Date(selectedVersion.fecha).toLocaleString()}
                                             </p>
                                         </div>
                                     </div>
@@ -425,7 +428,7 @@ const FichaDetailPage = () => {
                                         </p>
                                         <p>
                                             <span className="font-semibold">Modificado por:</span>
-                                            <span className="font-normal"> {selectedVersion.modificado_por_nombre || "Desconocido"}</span>
+                                            <span className="font-normal"> {selectedVersion.autor_nombre || "Desconocido"}</span>
                                         </p>
                                         <p>
                                             <span className="font-semibold">Fecha:</span>
@@ -452,7 +455,7 @@ const FichaDetailPage = () => {
                                         </p>
                                         <p className="mt-4">
                                             <span className="font-semibold">Última Modificación:</span>
-                                            <span className="font-normal"> {ficha.creado_por_nombre || "Desconocido"}</span>
+                                            <span className="font-normal"> {ficha.modificado_por_nombre || "Desconocido"}</span>
                                         </p>
                                         <p>
                                             <span className="font-semibold">Fecha:</span>
@@ -477,8 +480,8 @@ const FichaDetailPage = () => {
                                         <textarea
                                             name={field.name}
                                             value={selectedVersion
-                                                ? (selectedVersion[field.name as keyof FichaHistorial] as string || '')
-                                                : (editableFicha[field.name as keyof FichaAmbulatoria] as string || '')
+                                                ? (selectedVersion.contenido[field.name] || '')
+                                                : (editableFicha.contenido[field.name] || '')
                                             }
                                             onChange={handleInputChange}
                                             readOnly={!isEditing || !!selectedVersion}
@@ -499,8 +502,8 @@ const FichaDetailPage = () => {
                                 <textarea
                                     name="diagnostico"
                                     value={selectedVersion
-                                        ? (selectedVersion.diagnostico || '')
-                                        : (editableFicha.diagnostico || '')
+                                        ? (selectedVersion.contenido.diagnostico || '')
+                                        : (editableFicha.contenido.diagnostico || '')
                                     }
                                     onChange={handleInputChange}
                                     readOnly={!isEditing || !!selectedVersion}
@@ -519,8 +522,8 @@ const FichaDetailPage = () => {
                                 <textarea
                                     name="intervenciones"
                                     value={selectedVersion
-                                        ? (selectedVersion.intervenciones || '')
-                                        : (editableFicha.intervenciones || '')
+                                        ? (selectedVersion.contenido.intervenciones || '')
+                                        : (editableFicha.contenido.intervenciones || '')
                                     }
                                     onChange={handleInputChange}
                                     readOnly={!isEditing || !!selectedVersion}
@@ -648,34 +651,34 @@ const FichaDetailPage = () => {
                                             Ver contenido actual
                                         </summary>
                                         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                                            {ficha.factores && (
+                                            {ficha.contenido.factores && (
                                                 <div className="bg-gray-50 p-2 rounded">
                                                     <span className="font-medium">Factores:</span>
-                                                    <p className="text-gray-600 truncate">{ficha.factores}</p>
+                                                    <p className="text-gray-600 truncate">{ficha.contenido.factores}</p>
                                                 </div>
                                             )}
-                                            {ficha.anamnesis && (
+                                            {ficha.contenido.anamnesis && (
                                                 <div className="bg-gray-50 p-2 rounded">
                                                     <span className="font-medium">Anamnesis:</span>
-                                                    <p className="text-gray-600 truncate">{ficha.anamnesis}</p>
+                                                    <p className="text-gray-600 truncate">{ficha.contenido.anamnesis}</p>
                                                 </div>
                                             )}
-                                            {ficha.motivo_consulta && (
+                                            {ficha.contenido.motivo_consulta && (
                                                 <div className="bg-gray-50 p-2 rounded">
                                                     <span className="font-medium">Motivo Consulta:</span>
-                                                    <p className="text-gray-600 truncate">{ficha.motivo_consulta}</p>
+                                                    <p className="text-gray-600 truncate">{ficha.contenido.motivo_consulta}</p>
                                                 </div>
                                             )}
-                                            {ficha.diagnostico && (
+                                            {ficha.contenido.diagnostico && (
                                                 <div className="bg-gray-50 p-2 rounded">
                                                     <span className="font-medium">Diagnóstico:</span>
-                                                    <p className="text-gray-600 truncate">{ficha.diagnostico}</p>
+                                                    <p className="text-gray-600 truncate">{ficha.contenido.diagnostico}</p>
                                                 </div>
                                             )}
-                                            {ficha.intervenciones && (
+                                            {ficha.contenido.intervenciones && (
                                                 <div className="bg-gray-50 p-2 rounded">
                                                     <span className="font-medium">Intervenciones:</span>
-                                                    <p className="text-gray-600 truncate">{ficha.intervenciones}</p>
+                                                    <p className="text-gray-600 truncate">{ficha.contenido.intervenciones}</p>
                                                 </div>
                                             )}
                                         </div>
@@ -712,7 +715,7 @@ const FichaDetailPage = () => {
                                                     )}
                                                 </div>
                                                 <p className="text-sm text-gray-600 font-worksans">
-                                                    <span className="font-medium">Modificado por:</span> {version.modificado_por_nombre || 'Desconocido'}
+                                                    <span className="font-medium">Modificado por:</span> {version.autor_nombre || 'Desconocido'}
                                                 </p>
                                                 <p className="text-sm text-gray-500 font-worksans">
                                                     <span className="font-medium">Fecha:</span> {new Date(version.fecha).toLocaleString()}
@@ -738,34 +741,34 @@ const FichaDetailPage = () => {
                                                 Ver contenido de esta versión
                                             </summary>
                                             <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                                                {version.factores && (
+                                                {version.contenido.factores && (
                                                     <div className="bg-gray-50 p-2 rounded">
                                                         <span className="font-medium">Factores:</span>
-                                                        <p className="text-gray-600 truncate">{version.factores}</p>
+                                                        <p className="text-gray-600 truncate">{version.contenido.factores}</p>
                                                     </div>
                                                 )}
-                                                {version.anamnesis && (
+                                                {version.contenido.anamnesis && (
                                                     <div className="bg-gray-50 p-2 rounded">
                                                         <span className="font-medium">Anamnesis:</span>
-                                                        <p className="text-gray-600 truncate">{version.anamnesis}</p>
+                                                        <p className="text-gray-600 truncate">{version.contenido.anamnesis}</p>
                                                     </div>
                                                 )}
-                                                {version.motivo_consulta && (
+                                                {version.contenido.motivo_consulta && (
                                                     <div className="bg-gray-50 p-2 rounded">
                                                         <span className="font-medium">Motivo Consulta:</span>
-                                                        <p className="text-gray-600 truncate">{version.motivo_consulta}</p>
+                                                        <p className="text-gray-600 truncate">{version.contenido.motivo_consulta}</p>
                                                     </div>
                                                 )}
-                                                {version.diagnostico && (
+                                                {version.contenido.diagnostico && (
                                                     <div className="bg-gray-50 p-2 rounded">
                                                         <span className="font-medium">Diagnóstico:</span>
-                                                        <p className="text-gray-600 truncate">{version.diagnostico}</p>
+                                                        <p className="text-gray-600 truncate">{version.contenido.diagnostico}</p>
                                                     </div>
                                                 )}
-                                                {version.intervenciones && (
+                                                {version.contenido.intervenciones && (
                                                     <div className="bg-gray-50 p-2 rounded">
                                                         <span className="font-medium">Intervenciones:</span>
-                                                        <p className="text-gray-600 truncate">{version.intervenciones}</p>
+                                                        <p className="text-gray-600 truncate">{version.contenido.intervenciones}</p>
                                                     </div>
                                                 )}
                                             </div>

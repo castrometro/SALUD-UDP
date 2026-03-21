@@ -1,5 +1,5 @@
-import api from '../../../services/api';
-import { PaginatedResponse } from '../../../types/common';
+import api from '@/services/api';
+import { PaginatedResponse } from '@/types/common';
 import { Estudiante } from '../types';
 
 export const getEstudiantes = async (page: number = 1, search: string = ''): Promise<PaginatedResponse<Estudiante>> => {

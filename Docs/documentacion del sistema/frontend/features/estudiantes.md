@@ -36,7 +36,7 @@ Consume `/api/users/estudiantes/` (endpoint dedicado en backend).
 
 ### `EstudianteListPage.tsx`
 - Tabla con búsqueda por nombre/email y paginación.
-- Acciones: ver detalle, editar.
+- Acciones: ver detalle, editar, eliminar (con `window.confirm`).
 
 ### `EstudianteDetailPage.tsx`
 Perfil académico del estudiante con 2 pestañas:
@@ -48,7 +48,7 @@ Perfil académico del estudiante con 2 pestañas:
 
 ### `EstudianteFichasTab.tsx`
 - Tabla paginada de fichas.
-- Columnas: Fecha, Paciente (nombre + RUT), Diagnóstico, Ver.
+- Columnas: Fecha, Paciente (nombre + RUT), Diagnóstico (`ficha.contenido?.diagnostico`), Ver.
 
 ### `EstudianteCasosTab.tsx`
 - Agrupa fichas por paciente usando `useMemo()`.

@@ -1,4 +1,4 @@
-import React from 'react';
+import type { FC } from 'react';
 
 interface PaginationProps {
     currentPage: number;
@@ -8,7 +8,7 @@ interface PaginationProps {
     hasPrevious: boolean;
 }
 
-const Pagination: React.FC<PaginationProps> = ({
+const Pagination: FC<PaginationProps> = ({
     currentPage,
     totalPages,
     onPageChange,

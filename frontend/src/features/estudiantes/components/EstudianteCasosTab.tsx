@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
+import { useMemo, type FC } from 'react';
 import { Link } from 'react-router-dom';
 import { User, Calendar } from 'lucide-react';
 import { FichaAmbulatoria } from '../../fichas/types';
-import { formatRut } from '../../../utils/rut';
+import { formatRut } from '@/utils/rut';
 import { Paciente } from '../../pacientes/types';
 
 interface EstudianteCasosTabProps {
@@ -15,7 +15,7 @@ interface Caso {
     totalFichas: number;
 }
 
-const EstudianteCasosTab: React.FC<EstudianteCasosTabProps> = ({ fichas }) => {
+const EstudianteCasosTab: FC<EstudianteCasosTabProps> = ({ fichas }) => {
 
     const casos = useMemo(() => {
         const casosMap = new Map<number, Caso>();

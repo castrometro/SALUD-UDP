@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type FC } from 'react';
 import { Paciente } from '../../pacientes/types';
 import { getPacientes } from '../../pacientes/services/pacienteService';
 
@@ -8,7 +8,7 @@ interface PacienteSelectProps {
     disabled?: boolean;
 }
 
-const PacienteSelect: React.FC<PacienteSelectProps> = ({ value, onChange, disabled }) => {
+const PacienteSelect: FC<PacienteSelectProps> = ({ value, onChange, disabled }) => {
     const [query, setQuery] = useState('');
     const [options, setOptions] = useState<Paciente[]>([]);
     const [loading, setLoading] = useState(false);

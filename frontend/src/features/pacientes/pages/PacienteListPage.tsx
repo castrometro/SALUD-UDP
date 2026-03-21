@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Paciente } from '../types';
-import { getPacientes } from '../services/pacienteService';
+import { getPacientes, deletePaciente } from '../services/pacienteService';
 import { Search, Plus, Edit2, Trash2, Eye } from 'lucide-react';
-import { formatRut } from '../../../utils/rut';
-import Pagination from '../../../components/ui/Pagination';
+import { formatRut } from '@/utils/rut';
+import Pagination from '@/components/ui/Pagination';
 
 const PacienteListPage = () => {
     const [pacientes, setPacientes] = useState<Paciente[]>([]);
@@ -148,7 +148,10 @@ const PacienteListPage = () => {
                                                     <Link to={`/pacientes/${paciente.id}/editar`} className="text-gray-400 hover:text-amber-500 transition-colors">
                                                         <Edit2 className="w-5 h-5" />
                                                     </Link>
-                                                    <button className="text-gray-400 hover:text-red-600 transition-colors">
+                                                    <button
+                                                        onClick={() => handleDelete(paciente)}
+                                                        className="text-gray-400 hover:text-red-600 transition-colors"
+                                                    >
                                                         <Trash2 className="w-5 h-5" />
                                                     </button>
                                                 </div>

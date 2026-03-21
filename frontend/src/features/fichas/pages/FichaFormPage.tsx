@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { FichaAmbulatoria } from '../types';
+import { FichaAmbulatoria, CONTENIDO_DEFAULT } from '../types';
 import { createFicha, getFicha, updateFicha } from '../services/fichaService';
 import PacienteSelect from '../components/PacienteSelect';
 import { useAuth } from '../../auth/context/AuthContext';
@@ -18,15 +18,8 @@ const FichaFormPage = () => {
 
     const [formData, setFormData] = useState<Partial<FichaAmbulatoria>>({
         paciente: pacienteIdFromUrl ? parseInt(pacienteIdFromUrl) : undefined,
-        es_plantilla: isDocente, // Docentes crean plantillas por defecto
-        motivo_consulta: '',
-        anamnesis: '',
-        examen_fisico: '',
-        diagnostico: '',
-        intervenciones: '',
-        factores: '',
-        rau_necesidades: '',
-        instrumentos_aplicados: '',
+        es_plantilla: isDocente,
+        contenido: { ...CONTENIDO_DEFAULT },
     });
 
     useEffect(() => {
@@ -51,12 +44,15 @@ const FichaFormPage = () => {
         }
     };
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
         const { name, value } = e.target;
-        setFormData(prev => ({ ...prev, [name]: value }));
+        setFormData(prev => ({
+            ...prev,
+            contenido: { ...prev.contenido, [name]: value } as FichaAmbulatoria['contenido'],
+        }));
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
         try {
             if (isEdit && id) {
@@ -110,7 +106,7 @@ const FichaFormPage = () => {
                         name="factores"
                         id="factores"
                         rows={3}
-                        value={formData.factores}
+                        value={formData.contenido?.factores ?? ''}
                         onChange={handleChange}
                         className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                     />
@@ -123,7 +119,7 @@ const FichaFormPage = () => {
                         name="anamnesis"
                         id="anamnesis"
                         rows={4}
-                        value={formData.anamnesis}
+                        value={formData.contenido?.anamnesis ?? ''}
                         onChange={handleChange}
                         className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                     />
@@ -136,7 +132,7 @@ const FichaFormPage = () => {
                         name="motivo_consulta"
                         id="motivo_consulta"
                         rows={3}
-                        value={formData.motivo_consulta}
+                        value={formData.contenido?.motivo_consulta ?? ''}
                         onChange={handleChange}
                         className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                     />
@@ -149,7 +145,7 @@ const FichaFormPage = () => {
                         name="rau_necesidades"
                         id="rau_necesidades"
                         rows={3}
-                        value={formData.rau_necesidades}
+                        value={formData.contenido?.rau_necesidades ?? ''}
                         onChange={handleChange}
                         className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                     />
@@ -162,7 +158,7 @@ const FichaFormPage = () => {
                         name="examen_fisico"
                         id="examen_fisico"
                         rows={4}
-                        value={formData.examen_fisico}
+                        value={formData.contenido?.examen_fisico ?? ''}
                         onChange={handleChange}
                         className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                     />
@@ -175,7 +171,7 @@ const FichaFormPage = () => {
                         name="instrumentos_aplicados"
                         id="instrumentos_aplicados"
                         rows={3}
-                        value={formData.instrumentos_aplicados}
+                        value={formData.contenido?.instrumentos_aplicados ?? ''}
                         onChange={handleChange}
                         className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                     />
@@ -188,7 +184,7 @@ const FichaFormPage = () => {
                         name="diagnostico"
                         id="diagnostico"
                         rows={3}
-                        value={formData.diagnostico}
+                        value={formData.contenido?.diagnostico ?? ''}
                         onChange={handleChange}
                         className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                     />
@@ -201,7 +197,7 @@ const FichaFormPage = () => {
                         name="intervenciones"
                         id="intervenciones"
                         rows={3}
-                        value={formData.intervenciones}
+                        value={formData.contenido?.intervenciones ?? ''}
                         onChange={handleChange}
                         className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                     />

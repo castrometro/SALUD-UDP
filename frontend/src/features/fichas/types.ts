@@ -1,5 +1,28 @@
 import { Paciente } from '../pacientes/types';
 
+export interface ContenidoClinico {
+    motivo_consulta: string;
+    anamnesis: string;
+    examen_fisico: string;
+    diagnostico: string;
+    intervenciones: string;
+    factores: string;
+    rau_necesidades: string;
+    instrumentos_aplicados: string;
+    [key: string]: string;
+}
+
+export const CONTENIDO_DEFAULT: ContenidoClinico = {
+    motivo_consulta: '',
+    anamnesis: '',
+    examen_fisico: '',
+    diagnostico: '',
+    intervenciones: '',
+    factores: '',
+    rau_necesidades: '',
+    instrumentos_aplicados: '',
+};
+
 export interface FichaBaseInfo {
     id: number;
     fecha_modificacion: string;
@@ -8,17 +31,17 @@ export interface FichaBaseInfo {
 
 export interface FichaAmbulatoria {
     id: number;
-    paciente: number; // ID
-    paciente_detail?: Paciente; // From serializer
+    paciente: number;
+    paciente_detail?: Paciente;
 
-    // Tipo de ficha
     es_plantilla: boolean;
-    ficha_base: number | null; // ID de la ficha plantilla
+    ficha_base: number | null;
     ficha_base_info: FichaBaseInfo | null;
-    estudiante: number | null; // ID del estudiante dueño
+    estudiante: number | null;
     estudiante_nombre?: string | null;
 
-    // Trazabilidad
+    contenido: ContenidoClinico;
+
     creado_por?: number | null;
     creado_por_nombre?: string | null;
     modificado_por?: number | null;
@@ -26,33 +49,15 @@ export interface FichaAmbulatoria {
     fecha_creacion?: string;
     fecha_modificacion?: string;
     total_versiones?: number;
-
-    // Campos clínicos
-    motivo_consulta: string;
-    anamnesis: string;
-    examen_fisico: string;
-    diagnostico: string;
-    intervenciones: string;
-    factores: string;
-    rau_necesidades: string;
-    instrumentos_aplicados: string;
 }
 
 export interface FichaHistorial {
     id: number;
     ficha: number;
     version: number;
-    modificado_por?: number;
-    modificado_por_nombre?: string;
+    autor?: number;
+    autor_nombre?: string;
+    rol_autor?: string;
     fecha: string;
-
-    // Snapshot de campos clínicos
-    motivo_consulta: string;
-    anamnesis: string;
-    examen_fisico: string;
-    diagnostico: string;
-    intervenciones: string;
-    factores: string;
-    rau_necesidades: string;
-    instrumentos_aplicados: string;
+    contenido: ContenidoClinico;
 }
