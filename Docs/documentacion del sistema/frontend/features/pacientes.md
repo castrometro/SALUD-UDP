@@ -1,18 +1,56 @@
 # Documentación del Feature: Pacientes (Frontend)
 
 ## Propósito
-Permite buscar, listar, crear y ver el detalle de los pacientes. Es el punto de entrada para crear una ficha clínica (primero se busca al paciente).
+CRUD de pacientes y punto de entrada para crear fichas clínicas (primero se busca al paciente).
 
 ## Estructura
 
-### Pages
-- **`PacienteListPage.tsx`**: Tabla con buscador y filtros.
-- **`PacienteDetailPage.tsx`**: "Hoja de Vida" del paciente. Muestra sus datos y el historial de fichas asociadas.
-    - Desde aquí se inicia el flujo de "Crear Ficha" (Docente) o "Ver Caso" (Estudiante).
-- **`PacienteCreatePage.tsx`** (Planificada/Existente): Formulario de ingreso.
+```
+features/pacientes/
+├── types.ts                    # Paciente interface
+├── services/
+│   └── pacienteService.ts      # CRUD API calls
+└── pages/
+    ├── PacienteListPage.tsx    # Tabla con búsqueda y paginación
+    ├── PacienteFormPage.tsx    # Formulario crear/editar
+    └── PacienteDetailPage.tsx  # Detalle con fichas asociadas
+```
 
-### Components
-- **`PacienteSelect.tsx`**: Componente autocompletar reutilizable para asignar pacientes en formularios.
+## Tipos (`types.ts`)
+- `Paciente`: id, rut, nombre, apellido, prevision, correo, numero_telefono, fecha_nacimiento, domicilio, edad, timestamps.
 
-### Flujos Relacionados
-- **Ver Fichas**: El detalle del paciente lista las `FichaAmbulatoria` relacionadas. Al hacer click, redirige al `FichaDetailPage`.
+## Servicio (`pacienteService.ts`)
+
+| Función | Método | Endpoint |
+|---------|--------|----------|
+| `getPacientes(page, search)` | GET | `/pacientes/?page=&search=` |
+| `getPaciente(id)` | GET | `/pacientes/{id}/` |
+| `createPaciente(data)` | POST | `/pacientes/` |
+| `updatePaciente(id, data)` | PUT | `/pacientes/{id}/` |
+| `deletePaciente(id)` | DELETE | `/pacientes/{id}/` |
+
+## Páginas
+
+### `PacienteListPage.tsx`
+- Tabla con columnas: nombre, RUT, previsión, acciones.
+- Búsqueda con debounce de 500ms (resetea a página 1).
+- Paginación.
+- Botones: ver detalle, editar.
+
+### `PacienteFormPage.tsx`
+- Crear o editar paciente.
+- Validación de RUT chileno en frontend (`validateRut()`, `formatRut()`).
+- RUT deshabilitado en modo edición.
+- Dropdown de previsión (FONASA, ISAPRE, PARTICULAR).
+
+### `PacienteDetailPage.tsx`
+- Tarjeta con avatar (iniciales), RUT, previsión, datos de contacto.
+- Historial clínico agrupado por ficha base:
+  - Plantillas con borde púrpura.
+  - Copias de estudiantes anidadas con badges verdes.
+- Botón "Nueva Ficha" enlaza a `/fichas/nueva?paciente={id}`.
+
+## Flujo principal
+1. Docente busca paciente en lista.
+2. Entra al detalle del paciente.
+3. Desde ahí crea una ficha plantilla o revisa fichas existentes.

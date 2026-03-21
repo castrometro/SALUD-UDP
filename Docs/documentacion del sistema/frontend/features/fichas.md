@@ -1,31 +1,70 @@
 # Documentación del Feature: Fichas (Frontend)
 
 ## Propósito
-Este módulo en `/frontend/src/features/fichas` maneja toda la UI para la creación, edición y visualización de fichas clínicas. Es el punto de interacción principal para Estudiantes y Docentes.
+Maneja la UI para creación, edición y visualización de fichas clínicas. Es el punto de interacción principal para estudiantes y docentes.
 
-## Estructura de Archivos
+## Estructura
 
-### Pages
-- **`FichaDetailPage.tsx`**: La página más compleja del sistema.
-    - Maneja lógica condicional masiva según Roles (Docente vs Estudiante).
-    - Renderiza pestañas dinámicas: "Caso Clínico", "Historial" (Docente), "Fichas de Estudiantes" (Docente).
-    - Gestiona el estado de edición del formulario.
-- **`FichaFormPage.tsx`**: Formulario para crear nuevas fichas (no plantillas).
-
-### Components
-- **`EstudianteFichasTab.tsx`**: Muestra lista de fichas asociadas a un estudiante específico.
-- **`EstudianteCasosTab.tsx`**: Muestra casos (plantillas) asignados o disponibles para un estudiante.
-
-### Services (`fichaService.ts`)
-Encapsula las llamadas a la API.
-- `crearMiFicha(plantillaId)`: Clave para el flujo de estudiantes.
-- `getFichaHistorial(id)`: Obtiene versiones anteriores.
+```
+features/fichas/
+├── types.ts                    # FichaAmbulatoria, FichaHistorial, FichaBaseInfo
+├── services/
+│   └── fichaService.ts         # CRUD + acciones especiales
+├── pages/
+│   ├── FichaDetailPage.tsx     # Vista detalle con pestañas (la página más compleja)
+│   └── FichaFormPage.tsx       # Formulario crear/editar
+└── components/
+    └── PacienteSelect.tsx      # Autocomplete de pacientes
+```
 
 ## Tipos (`types.ts`)
-Sincronizados estrictamente con el Backend (ver Issue #3).
-- `FichaAmbulatoria`: Maneja campos nulos explícitamente (`number | null`).
-- `FichaBaseInfo`: Sub-interfaz para datos de la plantilla padre.
+- `FichaAmbulatoria`: ~30 campos. Incluye `paciente_detail` anidado, `es_plantilla`, `ficha_base`, `estudiante` (number | null), 8 campos clínicos, trazabilidad y `total_versiones`.
+- `FichaHistorial`: Snapshot versionado con los 8 campos clínicos + metadata.
+- `FichaBaseInfo`: Info resumida de la plantilla padre (id, fecha, autor).
 
-## Notas de Implementación
-- **Permisos en UI**: Se usa `user?.role` para ocultar/mostrar botones de edición y pestañas de historial.
-- **Gestión de Estado**: `FichaDetailPage` usa múltiples `useState` para manejar la carga asíncrona de historiales y sub-fichas solo cuando el usuario cambia de pestaña (Lazy Loading manual).
+## Servicio (`fichaService.ts`)
+
+| Función | Método | Endpoint |
+|---------|--------|----------|
+| `getFichas()` | GET | `/fichas/` |
+| `getFicha(id)` | GET | `/fichas/{id}/` |
+| `createFicha(data)` | POST | `/fichas/` |
+| `updateFicha(id, data)` | PUT | `/fichas/{id}/` |
+| `deleteFicha(id)` | DELETE | `/fichas/{id}/` |
+| `getFichasPlantillas()` | GET | `/fichas/?plantillas=true` |
+| `getFichasByPaciente(id)` | GET | `/fichas/?paciente={id}` |
+| `getFichasByEstudiante(id)` | GET | `/fichas/?estudiante={id}` |
+| `getFichaHistorial(id)` | GET | `/fichas/{id}/historial/` |
+| `crearMiFicha(plantillaId)` | POST | `/fichas/crear_mi_ficha/` |
+| `getMiFicha(id)` | GET | `/fichas/{id}/mi_ficha/` |
+| `getFichasEstudiantes(id)` | GET | `/fichas/{id}/fichas_estudiantes/` |
+
+## Páginas
+
+### `FichaDetailPage.tsx`
+La página más compleja del sistema. Tiene 3 pestañas:
+
+1. **Caso Clínico**: Muestra los 8 campos clínicos. Modo edición con guardar/descartar/eliminar.
+2. **Historial de Cambios**: Timeline de versiones anteriores. Se puede visualizar cualquier versión.
+3. **Fichas de Estudiantes** (solo docentes): Lista todos los alumnos que clonaron esta plantilla.
+
+**Lógica condicional por rol:**
+- Docente/Admin: puede editar, ver historial, ver fichas de estudiantes.
+- Estudiante viendo plantilla: ve botón "Crear mi ficha".
+- Estudiante viendo su ficha: puede editar.
+
+**Carga perezosa:** Las pestañas cargan datos solo cuando el usuario hace click.
+
+### `FichaFormPage.tsx`
+Formulario para crear nueva ficha o editar existente.
+- Detecta automáticamente si docente (crea plantilla) o estudiante (crea ficha propia).
+- Soporte para pre-seleccionar paciente via `?paciente={id}` en la URL.
+- 8 campos clínicos como textarea.
+
+## Componentes
+
+### `PacienteSelect.tsx`
+Autocompletado para seleccionar paciente:
+- Filtra por nombre, apellido o RUT.
+- Muestra como "Nombre Apellido (RUT)".
+- Click fuera para cerrar, botón para limpiar.

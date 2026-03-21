@@ -1,46 +1,81 @@
 # Documentación del Módulo: Fichas (Backend)
 
 ## Propósito
-El módulo de `fichas` gestiona toda la información clínica de la aplicación. Es el núcleo del sistema y maneja dos conceptos principales:
-1.  **Plantillas (Ficha Base)**: Casos clínicos creados por docentes.
-2.  **Fichas de Estudiantes**: Copias de las plantillas que los estudiantes rellenan.
+Núcleo del sistema. Gestiona fichas clínicas ambulatorias con dos conceptos principales:
+1. **Plantillas (Ficha Base)**: Casos clínicos creados por docentes.
+2. **Fichas de Estudiantes**: Copias de plantillas que los estudiantes completan.
 
-## Modelos de Datos (`models.py`)
+## Modelos (`models.py`)
 
 ### `FichaAmbulatoria`
-Es el modelo principal. Utiliza una estructura recursiva para relacionar la ficha del estudiante con la plantilla del docente.
+Modelo principal con estructura recursiva (self-referencing FK).
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
-| `es_plantilla` | Boolean | `True` si es creada por un docente (Caso Clínico). |
-| `ficha_base` | ForeignKey (self) | Referencia a la plantilla original. `null` si la ficha es la plantilla misma. |
-| `estudiante` | ForeignKey (User) | Dueño de la ficha. `null` si es una plantilla. |
-| `paciente` | ForeignKey | Paciente asociado al caso. |
+| `paciente` | FK → Paciente | Paciente asociado al caso |
+| `es_plantilla` | Boolean | `True` si es creada por docente |
+| `ficha_base` | FK → self | Referencia a la plantilla original (null si es plantilla) |
+| `estudiante` | FK → User | Dueño de la ficha (null si es plantilla) |
+| `creado_por` | FK → User | Quién la creó |
+| `modificado_por` | FK → User | Última persona que la modificó |
+| `motivo_consulta` | TextField | Campo clínico |
+| `anamnesis` | TextField | Campo clínico |
+| `examen_fisico` | TextField | Campo clínico |
+| `diagnostico` | TextField | Campo clínico |
+| `intervenciones` | TextField | Campo clínico |
+| `factores` | TextField | Campo clínico |
+| `rau_necesidades` | TextField | Campo clínico |
+| `instrumentos_aplicados` | TextField | Campo clínico |
 
-**Lógica Clave:**
-- Un estudiante crea una ficha copiando una plantilla.
-- La copia hereda los datos del `paciente` y la referencia a `ficha_base`.
+**Constraint**: `UniqueConstraint(fields=['ficha_base', 'estudiante'])` — un estudiante solo puede tener una copia por plantilla.
 
 ### `FichaHistorial`
-Implementa un sistema de control de versiones manual.
-- Cada vez que se actualiza una ficha, se guarda una copia de su estado anterior en esta tabla.
-- Permite a los docentes ver la evolución del razonamiento clínico del estudiante.
+Control de versiones manual. Cada vez que se actualiza una ficha, se guarda un snapshot del estado anterior.
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `ficha` | FK → FichaAmbulatoria | Ficha versionada |
+| `version` | PositiveInteger | Número de versión |
+| `modificado_por` | FK → User | Quién modificó |
+| `fecha` | DateTimeField | Timestamp del snapshot |
+| Campos clínicos | TextField | Copia de los 8 campos al momento de la modificación |
 
 ## Serializers (`serializers.py`)
 
 ### `FichaAmbulatoriaSerializer`
-- **Campos de Lectura**: Incluye detalles anidados del `paciente` y nombres de usuarios (`creado_por_nombre`).
-- **Validación de Tipos**: Se ajustó para permitir valores `null` explícitos en `ficha_base` y `estudiante`, sincronizado con el frontend.
+- Campos anidados de solo lectura: `paciente_detail`, `creado_por_nombre`, `estudiante_nombre`.
+- `ficha_base_info`: Método que retorna id, fecha y autor de la plantilla padre.
+- `total_versiones`: Count del historial.
+- **En `update()`**: Guarda automáticamente el estado anterior en `FichaHistorial` antes de aplicar cambios.
 
 ### `CrearFichaEstudianteSerializer`
-- Serializer especializado para la acción de "Clonar Plantilla".
-- Valida que el estudiante no tenga ya una copia de esa plantilla específica.
+- Recibe `ficha_base_id`.
+- Valida que la plantilla exista y que el estudiante no tenga ya una copia.
+- Crea una copia profunda de la plantilla con los 8 campos clínicos.
 
-## Vistas y Endpoints (`views.py`)
+## Vistas (`views.py`)
 
-| Método | Endpoint | Descripción |
-|--------|----------|-------------|
-| GET | `/api/fichas/` | Lista fichas. Filtra según rol (Estudiante ve las suyas, Docente ve todas). |
-| POST | `/api/fichas/{id}/crear_mi_ficha/` | Clona una plantilla (ID) para el usuario autenticado. |
-| GET | `/api/fichas/{id}/historial/` | Retorna todas las versiones históricas de una ficha. |
-| GET | `/api/fichas/{id}/fichas_estudiantes/` | (Docente) Lista todas las copias de alumnos asociadas a una plantilla. |
+### `FichaAmbulatoriaViewSet`
+
+**Filtrado por rol en `get_queryset()`:**
+- Admin/Docente: ven todas las fichas.
+- Estudiante: solo plantillas + sus propias fichas.
+
+**Query params:**
+- `?paciente={id}` — filtrar por paciente.
+- `?plantillas=true` — solo plantillas.
+- `?estudiante={id}` — fichas de un estudiante específico (solo docentes).
+
+## Endpoints
+
+| Método | Endpoint | Rol | Descripción |
+|--------|----------|-----|-------------|
+| GET | `/api/fichas/` | Autenticado | Lista fichas (filtrada por rol) |
+| POST | `/api/fichas/` | Autenticado | Crear ficha (plantilla si docente, propia si estudiante) |
+| GET | `/api/fichas/{id}/` | Autenticado | Detalle de ficha |
+| PUT | `/api/fichas/{id}/` | Dueño/Docente/Admin | Editar ficha (genera historial) |
+| DELETE | `/api/fichas/{id}/` | Dueño/Docente/Admin | Eliminar ficha |
+| POST | `/api/fichas/crear_mi_ficha/` | Estudiante | Clonar plantilla para el estudiante |
+| GET | `/api/fichas/{id}/historial/` | Autenticado | Versiones históricas de una ficha |
+| GET | `/api/fichas/{id}/fichas_estudiantes/` | Docente/Admin | Copias de alumnos de una plantilla |
+| GET | `/api/fichas/{id}/mi_ficha/` | Estudiante | Obtener ficha propia para una plantilla |
