@@ -2,11 +2,18 @@ from django.db import models
 from datetime import date
 from apps.common.validators import validate_rut, format_rut
 
+
+class Prevision(models.TextChoices):
+    FONASA = 'FONASA', 'FONASA'
+    ISAPRE = 'ISAPRE', 'ISAPRE'
+    PARTICULAR = 'PARTICULAR', 'PARTICULAR'
+
+
 class Paciente(models.Model):
-    rut = models.CharField(max_length=12, unique=True, verbose_name="RUT", validators=[validate_rut])
+    rut = models.CharField(max_length=20, unique=True, verbose_name="RUT", validators=[validate_rut])
     nombre = models.CharField(max_length=100)
     apellido = models.CharField(max_length=100)
-    prevision = models.CharField(max_length=100)
+    prevision = models.CharField(max_length=20, choices=Prevision.choices)
     correo = models.EmailField(blank=True, null=True)
     numero_telefono = models.CharField(max_length=20, blank=True, null=True)
     fecha_nacimiento = models.DateField()

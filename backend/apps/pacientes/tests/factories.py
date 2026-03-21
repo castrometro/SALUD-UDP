@@ -11,4 +11,4 @@ class PacienteFactory(DjangoModelFactory):
     nombre = factory.Faker('first_name')
     apellido = factory.Faker('last_name')
     fecha_nacimiento = datetime.date(1990, 1, 1)
-    prevision = 'FONASA'
+    prevision = 'FONASA'  # Valid Prevision.choices value

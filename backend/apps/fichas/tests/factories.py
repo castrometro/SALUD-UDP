@@ -1,13 +1,12 @@
 import factory
 from factory.django import DjangoModelFactory
-from django.contrib.auth import get_user_model
-from apps.fichas.models import FichaAmbulatoria
+from apps.fichas.models import Ficha, CAMPOS_CLINICOS_DEFAULT
 from apps.pacientes.tests.factories import PacienteFactory
 
-class FichaAmbulatoriaFactory(DjangoModelFactory):
+class FichaFactory(DjangoModelFactory):
     class Meta:
-        model = FichaAmbulatoria
-    
+        model = Ficha
+
     paciente = factory.SubFactory(PacienteFactory)
-    motivo_consulta = "Dolor de cabeza"
+    contenido = factory.LazyFunction(lambda: CAMPOS_CLINICOS_DEFAULT.copy())
     es_plantilla = True

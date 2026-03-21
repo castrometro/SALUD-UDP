@@ -4,6 +4,7 @@ from django.utils.translation import gettext_lazy as _
 from django.utils import timezone
 from apps.common.validators import validate_rut, format_rut
 
+
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
@@ -34,19 +35,21 @@ class User(AbstractBaseUser, PermissionsMixin):
         ESTUDIANTE = 'ESTUDIANTE', _('Estudiante')
 
     email = models.EmailField(_('email address'), unique=True)
-    first_name = models.CharField(_('first name'), max_length=150, blank=True)
-    last_name = models.CharField(_('last name'), max_length=150, blank=True)
-    rut = models.CharField(max_length=12, blank=True, null=True, verbose_name="RUT", validators=[validate_rut])
+    first_name = models.CharField(_('first name'), max_length=150)
+    last_name = models.CharField(_('last name'), max_length=150)
+    rut = models.CharField(max_length=20, blank=True, null=True, unique=True, verbose_name="RUT", validators=[validate_rut])
     role = models.CharField(
         max_length=20, 
         choices=Role.choices, 
         default=Role.ESTUDIANTE,
+        db_index=True,
         verbose_name="Rol"
     )
     
     is_staff = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     date_joined = models.DateTimeField(default=timezone.now)
+    updated_at = models.DateTimeField(auto_now=True)
 
     objects = CustomUserManager()
 
