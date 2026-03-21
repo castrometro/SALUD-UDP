@@ -11,6 +11,7 @@ import FichaFormPage from './features/fichas/pages/FichaFormPage';
 import FichaDetailPage from './features/fichas/pages/FichaDetailPage';
 import EstudianteListPage from './features/estudiantes/pages/EstudianteListPage';
 import EstudianteDetailPage from './features/estudiantes/pages/EstudianteDetailPage';
+import EstudianteFormPage from './features/estudiantes/pages/EstudianteFormPage';
 
 const PrivateRoute = ({ children }: { children: JSX.Element }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -58,7 +59,9 @@ function App() {
 
                         {/* Estudiantes */}
                         <Route path="estudiantes" element={<EstudianteListPage />} />
+                        <Route path="estudiantes/nuevo" element={<EstudianteFormPage />} />
                         <Route path="estudiantes/:id" element={<EstudianteDetailPage />} />
+                        <Route path="estudiantes/:id/editar" element={<EstudianteFormPage />} />
                     </Route>
                 </Routes>
             </AuthProvider>

@@ -45,6 +45,16 @@ const PacienteListPage = () => {
         }
     };
 
+    const handleDelete = async (paciente: Paciente) => {
+        if (!window.confirm(`¿Estás seguro de eliminar al paciente ${paciente.nombre} ${paciente.apellido}?`)) return;
+        try {
+            await deletePaciente(paciente.id);
+            loadPacientes();
+        } catch (error) {
+            console.error('Error eliminando paciente', error);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-beige">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

@@ -1,6 +1,6 @@
 import api from '@/services/api';
 import { PaginatedResponse } from '@/types/common';
-import { Estudiante } from '../types';
+import { Estudiante, EstudianteCreateData } from '../types';
 
 export const getEstudiantes = async (page: number = 1, search: string = ''): Promise<PaginatedResponse<Estudiante>> => {
     const response = await api.get<PaginatedResponse<Estudiante>>(`/users/estudiantes/?page=${page}&search=${search}`);
@@ -12,7 +12,7 @@ export const getEstudiante = async (id: number): Promise<Estudiante> => {
     return response.data;
 };
 
-export const createEstudiante = async (estudiante: Partial<Estudiante>): Promise<Estudiante> => {
+export const createEstudiante = async (estudiante: EstudianteCreateData): Promise<Estudiante> => {
     const response = await api.post<Estudiante>('/users/estudiantes/', estudiante);
     return response.data;
 };

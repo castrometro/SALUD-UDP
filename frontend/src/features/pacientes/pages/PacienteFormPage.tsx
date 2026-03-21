@@ -65,8 +65,9 @@ const PacienteFormPage = () => {
     };
 
     return (
-        <div className="max-w-2xl mx-auto">
-            <h1 className="text-2xl font-semibold text-gray-900 mb-6">
+        <div className="min-h-screen bg-beige">
+            <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <h1 className="text-3xl font-arizona font-medium text-gray-900 mb-6">
                 {isEdit ? 'Editar Paciente' : 'Nuevo Paciente'}
             </h1>
             
@@ -195,6 +196,7 @@ const PacienteFormPage = () => {
                     </button>
                 </div>
             </form>
+        </div>
         </div>
     );
 };
