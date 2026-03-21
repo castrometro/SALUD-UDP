@@ -9,6 +9,20 @@ export default defineConfig({
     port: 5173,
     watch: {
       usePolling: true // Necesario en algunos sistemas de archivos montados
-    }
+    },
+    proxy: {
+      '/api': {
+        target: 'http://backend:8000',
+        changeOrigin: true,
+      },
+      '/admin': {
+        target: 'http://backend:8000',
+        changeOrigin: true,
+      },
+      '/static': {
+        target: 'http://backend:8000',
+        changeOrigin: true,
+      },
+    },
   }
 })
