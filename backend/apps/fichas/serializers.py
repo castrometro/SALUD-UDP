@@ -19,6 +19,9 @@ class CasoClinicoSerializer(serializers.ModelSerializer):
         read_only_fields = ('creado_por', 'modificado_por', 'fecha_creacion', 'fecha_modificacion')
 
     def get_total_estudiantes(self, obj):
+        # Prefer annotation set by ViewSet to avoid N+1 in list views
+        if hasattr(obj, 'total_estudiantes'):
+            return obj.total_estudiantes
         return obj.fichas_estudiantes.count()
 
     def create(self, validated_data):
@@ -51,6 +54,9 @@ class FichaEstudianteSerializer(serializers.ModelSerializer):
         read_only_fields = ('creado_por', 'modificado_por', 'fecha_creacion', 'fecha_modificacion')
 
     def get_total_versiones(self, obj):
+        # Prefer annotation set by ViewSet to avoid N+1 in list views
+        if hasattr(obj, 'total_versiones'):
+            return obj.total_versiones
         return obj.versiones.count()
 
     def create(self, validated_data):

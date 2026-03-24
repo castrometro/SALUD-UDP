@@ -1,6 +1,5 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { CasoClinico } from '../types';
 import { createCasoClinico, getCasoClinico, updateCasoClinico } from '../services/fichaService';
 import PacienteSelect from '../components/PacienteSelect';
 import Toast from '@/components/ui/Toast';
@@ -56,7 +55,7 @@ const FichaFormPage = () => {
                 await updateCasoClinico(Number(id), {
                     titulo: formData.titulo,
                     descripcion: formData.descripcion,
-                } as Partial<CasoClinico>);
+                });
                 setToast({ message: 'Caso clínico actualizado exitosamente', type: 'success' });
                 setTimeout(() => navigate(`/casos-clinicos/${id}`), 1200);
             } else {

@@ -69,7 +69,8 @@ const FichaDetailPage = () => {
             setMiFicha(ficha);
         } catch (error) {
             console.error('Error loading mi ficha', error);
-            setMiFicha(null);
+            setToast({ message: 'Error al cargar el estado de tu ficha', type: 'error' });
+            // Mantener miFicha como undefined para no mostrar el botón "Crear mi ficha" incorrectamente
         } finally {
             setMiFichaLoading(false);
         }
