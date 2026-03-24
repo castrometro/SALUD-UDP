@@ -47,7 +47,7 @@ const PacienteFormPage = () => {
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        if (!validateRut(formData.rut)) {
+        if (!isEdit && !validateRut(formData.rut)) {
             alert('El RUT ingresado no es válido');
             return;
         }
