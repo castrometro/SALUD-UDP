@@ -24,7 +24,7 @@ Browser → localhost:5173 (Vite dev)
 |-----|-----|
 | `apps/users` | Auth JWT (email-based), roles ADMIN/DOCENTE/ESTUDIANTE |
 | `apps/pacientes` | CRUD pacientes, validación RUT chileno |
-| `apps/fichas` | Plantillas → clones de estudiante, JSONField flexible, versionamiento |
+| `apps/fichas` | Plantillas, CasosClinicos, FichasEstudiantes, versionamiento, JSONField flexible |
 | `apps/common` | Validadores compartidos (`validate_rut`, `format_rut`) |
 
 ### Frontend — Feature-based React
@@ -64,14 +64,20 @@ docker compose down -v && docker compose up --build -d
 - Roles via `TextChoices`: `ADMIN`, `DOCENTE`, `ESTUDIANTE`.
 - RUT se auto-formatea en `save()` usando `format_rut()` de `apps/common/validators`.
 - `validate_rut()` está **deshabilitada para MVP** (permite RUTs ficticios como SIM-001).
-- Fichas usan modelo recursivo: `ficha_base → Ficha(self)`. Constraint único `(ficha_base, estudiante)`.
+- Fichas usan arquitectura de **3 modelos**: `Plantilla` → `CasoClinico` → `FichaEstudiante` → `FichaVersion`.
+- `Plantilla`: caso clínico base (título, descripción, contenido JSON).
+- `CasoClinico`: vincula Plantilla + Paciente. Constraint único `(plantilla, paciente)`.
+- `FichaEstudiante`: ficha individual del estudiante en un caso. Constraint único `(caso_clinico, estudiante)`.
 - `contenido` es un `JSONField` con 8 campos clínicos predefinidos en `CAMPOS_CLINICOS_DEFAULT`.
-- `FichaVersion` guarda snapshots automáticos al editar (creados en `serializer.update()`).
+- `FichaVersion` guarda snapshots automáticos al editar FichaEstudiante (creados en `serializer.update()`).
+- **on_delete=PROTECT**: CasoClinico→Plantilla, CasoClinico→Paciente, FichaEstudiante→CasoClinico. ViewSets retornan HTTP 409 antes de que Django lance ProtectedError.
 
 ### Views/Serializers
-- `ModelViewSet` + `DefaultRouter` (sin namespaces, rutas directas bajo `/api/`).
+- `ModelViewSet` + `DefaultRouter` (sin namespaces, rutas bajo `/api/fichas/`).
+- **3 ViewSets**: `PlantillaViewSet`, `CasoClinicoViewSet`, `FichaEstudianteViewSet`.
+- **3 routers**: `/fichas/plantillas/`, `/fichas/casos-clinicos/`, `/fichas/fichas-estudiantes/`.
 - Permisos dinámicos en `get_permissions()`: lectura abierta a autenticados, escritura por rol.
-- Filtrado smart en `get_queryset()`: admin/docente ven todo, estudiante ve plantillas + propias.
+- Filtrado smart en `get_queryset()`: admin/docente ven todo, estudiante ve solo sus fichas.
 - Acciones custom con `@action`: `crear_mi_ficha`, `historial`, `fichas_estudiantes`, `mi_ficha`.
 - Serializers asignan `creado_por`/`modificado_por` desde `request.user`.
 - Paginación global: `StandardResultsSetPagination` (PAGE_SIZE=10).
@@ -115,4 +121,5 @@ Cada feature sigue: `pages/` + `components/` + `services/` + `types.ts`.
 - **Token refresh hardcodeado**: `api.ts` usa ruta relativa `/api/token/refresh/` — funciona solo con proxy de Vite o Nginx.
 - **Compose no expone MySQL**: puerto 3306 no mapeado al host. Para desarrollo local sin Docker, cambiar `DB_HOST=localhost` y mapear puerto.
 - **`CORS_ALLOW_ALL_ORIGINS = True`**: solo desarrollo. No usar en producción.
-- **Fichas on_delete=PROTECT**: no se puede borrar un paciente que tenga fichas asociadas.
+- **on_delete=PROTECT con 409**: No se puede borrar una entidad con hijos. Los ViewSets de Plantilla, CasoClinico y Paciente hacen pre-check y retornan HTTP 409 Conflict con mensaje descriptivo. El frontend muestra el `detail` del backend vía Toast.
+- **Arquitectura de 3 modelos**: Plantilla → CasoClinico → FichaEstudiante. No existe modelo `Ficha` ni `FichaAmbulatoria`. Los endpoints están bajo `/api/fichas/plantillas/`, `/api/fichas/casos-clinicos/`, `/api/fichas/fichas-estudiantes/`.

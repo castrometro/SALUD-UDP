@@ -1,9 +1,10 @@
 # Documentación del Módulo: Fichas (Backend)
 
 ## Propósito
-Núcleo del sistema. Gestiona fichas clínicas con dos conceptos principales:
-1. **Plantillas (Ficha Base)**: Casos clínicos creados por docentes.
-2. **Fichas de Estudiantes**: Copias de plantillas que los estudiantes completan.
+Núcleo del sistema. Gestiona fichas clínicas de simulación con una arquitectura de 3 modelos separados:
+1. **Plantilla**: Caso clínico base creado por docentes (define el contenido clínico inicial).
+2. **CasoClinico**: Vincula una Plantilla con un Paciente específico.
+3. **FichaEstudiante**: Copia del caso que cada estudiante completa individualmente.
 
 El contenido clínico se almacena como **JSONField**, lo que permite:
 - Diferentes estructuras de campos según el tipo de atención (futuro).
@@ -12,22 +13,66 @@ El contenido clínico se almacena como **JSONField**, lo que permite:
 
 ## Modelos (`models.py`)
 
-### `Ficha`
-Modelo principal con estructura recursiva (self-referencing FK).
+### `Plantilla`
+Caso clínico base. Contiene los campos clínicos iniciales y metadatos.
 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
-| `paciente` | FK → Paciente | Paciente asociado al caso. `on_delete=PROTECT` (no se puede borrar un paciente con fichas) |
-| `es_plantilla` | Boolean | `True` si es creada por docente |
-| `ficha_base` | FK → self | Referencia a la plantilla original (null si es plantilla). `on_delete=PROTECT` |
-| `estudiante` | FK → User | Dueño de la ficha (null si es plantilla). `on_delete=SET_NULL` |
+| `titulo` | CharField(255) | Nombre descriptivo del caso |
+| `descripcion` | TextField | Descripción del caso clínico |
 | `contenido` | JSONField | Campos clínicos en formato JSON (ver estructura abajo) |
 | `creado_por` | FK → User | Quién la creó. `on_delete=SET_NULL` |
 | `modificado_por` | FK → User | Última persona que la modificó. `on_delete=SET_NULL` |
-| `fecha_creacion` | DateTimeField | Auto |
-| `fecha_modificacion` | DateTimeField | Auto |
+| `fecha_creacion` | DateTimeField | `auto_now_add` |
+| `fecha_modificacion` | DateTimeField | `auto_now` |
 
-**Estructura de `contenido` (MVP ambulatorio):**
+**Ordering**: `-fecha_creacion`
+
+### `CasoClinico`
+Vinculación entre una Plantilla y un Paciente. Permite que una misma Plantilla se use con distintos pacientes.
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `plantilla` | FK → Plantilla | Plantilla asociada. `on_delete=PROTECT` |
+| `paciente` | FK → Paciente | Paciente del caso. `on_delete=PROTECT` |
+| `creado_por` | FK → User | Quién lo creó. `on_delete=SET_NULL` |
+| `fecha_creacion` | DateTimeField | `auto_now_add` |
+
+**Constraint**: `UniqueConstraint(fields=['plantilla', 'paciente'])` — un paciente solo puede estar en un caso por plantilla.
+**Ordering**: `-fecha_creacion`
+
+### `FichaEstudiante`
+Ficha individual del estudiante. Copia el contenido clínico de la Plantilla del caso para que el estudiante lo complete.
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `caso_clinico` | FK → CasoClinico | Caso al que pertenece. `on_delete=PROTECT` |
+| `estudiante` | FK → User | Estudiante dueño. `on_delete=SET_NULL` |
+| `contenido` | JSONField | Campos clínicos del estudiante |
+| `creado_por` | FK → User | Quién la creó. `on_delete=SET_NULL` |
+| `modificado_por` | FK → User | Última persona que la modificó. `on_delete=SET_NULL` |
+| `fecha_creacion` | DateTimeField | `auto_now_add` |
+| `fecha_modificacion` | DateTimeField | `auto_now` |
+
+**Constraint**: `UniqueConstraint(fields=['caso_clinico', 'estudiante'], condition=Q(estudiante__isnull=False))` — un estudiante solo puede tener una ficha por caso clínico.
+**Ordering**: `-fecha_creacion`
+
+### `FichaVersion`
+Control de versiones. Cada vez que se actualiza una FichaEstudiante, se guarda un snapshot del estado anterior.
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `ficha` | FK → FichaEstudiante | Ficha versionada. `on_delete=CASCADE` |
+| `version` | PositiveInteger | Número de versión (autoincremental) |
+| `autor` | FK → User | Quién hizo la modificación. `on_delete=SET_NULL` |
+| `rol_autor` | CharField(20) | Rol con el que actuó (ESTUDIANTE, DOCENTE, etc.) |
+| `fecha` | DateTimeField | `auto_now_add` |
+| `contenido` | JSONField | Snapshot completo del contenido clínico |
+
+**Constraint**: `UniqueConstraint(fields=['ficha', 'version'])`.
+**Ordering**: `-version`
+
+### Estructura de `contenido` (MVP ambulatorio)
 ```json
 {
     "motivo_consulta": "",
@@ -41,70 +86,115 @@ Modelo principal con estructura recursiva (self-referencing FK).
 }
 ```
 
-**Constraint**: `UniqueConstraint(fields=['ficha_base', 'estudiante'])` — un estudiante solo puede tener una copia por plantilla.
-
-**Constante**: `CAMPOS_CLINICOS_DEFAULT` — diccionario con la estructura por defecto del contenido para el MVP.
-
-### `FichaVersion`
-Control de versiones. Cada vez que se actualiza una ficha, se guarda un snapshot del estado anterior.
-
-| Campo | Tipo | Descripción |
-|-------|------|-------------|
-| `ficha` | FK → Ficha | Ficha versionada |
-| `version` | PositiveInteger | Número de versión |
-| `autor` | FK → User | Quién hizo la modificación |
-| `rol_autor` | CharField(20) | Rol con el que actuó (ESTUDIANTE, DOCENTE, etc.) |
-| `fecha` | DateTimeField | Timestamp del snapshot |
-| `contenido` | JSONField | Snapshot completo del contenido clínico al momento de la modificación |
-
-**Constraint**: `UniqueConstraint(fields=['ficha', 'version'])`.
+**Constante**: `CAMPOS_CLINICOS_DEFAULT` — diccionario con la estructura por defecto del contenido.
 
 ## Serializers (`serializers.py`)
 
-### `FichaSerializer`
-- Campos anidados de solo lectura: `paciente_detail`, `creado_por_nombre`, `estudiante_nombre`.
-- `ficha_base_info`: Método que retorna id, fecha y autor de la plantilla padre.
-- `total_versiones`: Count de versiones.
-- **En `create()`**: Si no viene `contenido`, asigna `CAMPOS_CLINICOS_DEFAULT`.
-- **En `update()`**: Guarda automáticamente el estado anterior como `FichaVersion` antes de aplicar cambios. Registra `rol_autor` del usuario.
+### `PlantillaSerializer`
+- Campos de solo lectura: `creado_por`, `modificado_por`, `fecha_creacion`, `fecha_modificacion`.
+- Campos calculados: `creado_por_nombre`, `modificado_por_nombre`, `total_casos` (count de CasosClinicos), `total_estudiantes` (count de FichasEstudiantes a través de casos).
+- **En `create()`**: Asigna `creado_por=request.user`. Si no viene `contenido`, asigna `CAMPOS_CLINICOS_DEFAULT`.
+- **En `update()`**: Asigna `modificado_por=request.user`.
+
+### `CasoClinicoSerializer`
+- Campos de solo lectura: `creado_por`, `fecha_creacion`.
+- Campos anidados: `paciente_detail` (PacienteSerializer), `plantilla_titulo`.
+- Campos calculados: `creado_por_nombre`, `total_estudiantes`.
+- **En `create()`**: Asigna `creado_por=request.user`.
+
+### `FichaEstudianteSerializer`
+- Campos de solo lectura: `creado_por`, `modificado_por`, `fecha_creacion`, `fecha_modificacion`.
+- Campos anidados: `caso_clinico_detail` (CasoClinicoSerializer), `estudiante_nombre`, `creado_por_nombre`, `modificado_por_nombre`.
+- Campos calculados: `total_versiones`.
+- **En `create()`**: Asigna `creado_por=request.user`. Copia `contenido` de la plantilla del caso o usa `CAMPOS_CLINICOS_DEFAULT`.
+- **En `update()`**: Guarda automáticamente el estado anterior como `FichaVersion` (método `_guardar_version()`) antes de aplicar cambios. Registra `rol_autor` del usuario. Asigna `modificado_por=request.user`.
+
+### `FichaVersionSerializer`
+- Campos: todos del modelo + `autor_nombre`.
 
 ### `CrearFichaEstudianteSerializer`
-- Recibe `ficha_base_id`.
-- Valida que la plantilla exista y que el estudiante no tenga ya una copia.
-- Crea una copia con el `contenido` JSON de la plantilla.
+- Recibe `caso_clinico_id`.
+- Valida que el caso exista.
+- Crea FichaEstudiante con `estudiante=request.user`, copia contenido de la plantilla del caso.
+- El constraint de unicidad en BD previene duplicados.
 
 ## Vistas (`views.py`)
 
-### `FichaViewSet`
+### `PlantillaViewSet`
+- **queryset**: Todas las plantillas con `select_related('creado_por', 'modificado_por')`.
+- **Permisos**: `IsAuthenticated` para lectura, `IsAuthenticated + IsOwnerOrDocenteOrAdmin` para escritura.
+- **destroy()**: Retorna HTTP **409 Conflict** si la plantilla tiene casos clínicos asociados. Mensaje descriptivo en español.
 
-**Filtrado por rol en `get_queryset()`:**
-- Admin/Docente: ven todas las fichas.
-- Estudiante: solo plantillas + sus propias fichas.
+### `CasoClinicoViewSet`
+- **queryset**: Todos los casos con `select_related` múltiple.
+- **Permisos**: `IsAuthenticated` para lectura, `IsAuthenticated + IsOwnerOrDocenteOrAdmin` para escritura.
+- **Query params**: `?plantilla={id}`, `?paciente={id}`.
+- **destroy()**: Retorna HTTP **409 Conflict** si el caso tiene fichas de estudiantes asociadas.
+- **Acción custom**: `@action(detail=True) fichas_estudiantes/` — lista paginada de FichasEstudiantes del caso.
 
-**Query params:**
-- `?paciente={id}` — filtrar por paciente.
-- `?plantillas=true` — solo plantillas.
-- `?estudiante={id}` — fichas de un estudiante específico (solo docentes).
+### `FichaEstudianteViewSet`
+- **queryset**: Todas las fichas con `select_related` complejo encadenado.
+- **Permisos**: `IsAuthenticated` para lectura, `IsAuthenticated + IsOwnerOrDocenteOrAdmin` para update/destroy.
+- **Filtrado por rol**: Estudiante solo ve sus fichas. Docente/Admin ven todas.
+- **Query params**: `?caso_clinico={id}`, `?estudiante={id}` (solo docentes).
+- **Acciones custom**:
+  - `crear_mi_ficha/` (POST, detail=False): Crea ficha para el usuario actual en un caso.
+  - `historial/` (GET, detail=True): Retorna FichaVersions de la ficha.
+  - `mi_ficha/` (GET, detail=False, `?caso_clinico={id}`): Retorna la ficha del usuario en un caso, 404 si no existe.
 
 ## Endpoints
 
+### Plantillas
 | Método | Endpoint | Rol | Descripción |
 |--------|----------|-----|-------------|
-| GET | `/api/fichas/` | Autenticado | Lista fichas (filtrada por rol) |
-| POST | `/api/fichas/` | Autenticado | Crear ficha (plantilla si docente, propia si estudiante) |
-| GET | `/api/fichas/{id}/` | Autenticado | Detalle de ficha |
-| PUT | `/api/fichas/{id}/` | Dueño/Docente/Admin | Editar ficha (genera versión en historial) |
-| DELETE | `/api/fichas/{id}/` | Dueño/Docente/Admin | Eliminar ficha |
-| POST | `/api/fichas/crear_mi_ficha/` | Estudiante | Clonar plantilla para el estudiante |
-| GET | `/api/fichas/{id}/historial/` | Autenticado | Versiones históricas de una ficha |
-| GET | `/api/fichas/{id}/fichas_estudiantes/` | Docente/Admin | Copias de alumnos de una plantilla |
-| GET | `/api/fichas/{id}/mi_ficha/` | Estudiante | Obtener ficha propia para una plantilla |
+| GET | `/api/fichas/plantillas/` | Autenticado | Lista plantillas (paginada) |
+| POST | `/api/fichas/plantillas/` | Docente/Admin | Crear plantilla |
+| GET | `/api/fichas/plantillas/{id}/` | Autenticado | Detalle de plantilla |
+| PUT/PATCH | `/api/fichas/plantillas/{id}/` | Dueño/Docente/Admin | Editar plantilla |
+| DELETE | `/api/fichas/plantillas/{id}/` | Dueño/Docente/Admin | Eliminar (409 si tiene casos) |
+
+### Casos Clínicos
+| Método | Endpoint | Rol | Descripción |
+|--------|----------|-----|-------------|
+| GET | `/api/fichas/casos-clinicos/` | Autenticado | Lista casos clínicos |
+| POST | `/api/fichas/casos-clinicos/` | Docente/Admin | Crear caso (vincular plantilla+paciente) |
+| GET | `/api/fichas/casos-clinicos/{id}/` | Autenticado | Detalle del caso |
+| DELETE | `/api/fichas/casos-clinicos/{id}/` | Dueño/Docente/Admin | Eliminar (409 si tiene fichas) |
+| GET | `/api/fichas/casos-clinicos/{id}/fichas_estudiantes/` | Docente/Admin | Fichas de estudiantes del caso |
+
+### Fichas de Estudiantes
+| Método | Endpoint | Rol | Descripción |
+|--------|----------|-----|-------------|
+| GET | `/api/fichas/fichas-estudiantes/` | Autenticado | Lista fichas (filtrada por rol) |
+| GET | `/api/fichas/fichas-estudiantes/{id}/` | Autenticado | Detalle de ficha |
+| PUT/PATCH | `/api/fichas/fichas-estudiantes/{id}/` | Dueño/Docente/Admin | Editar (genera versión) |
+| DELETE | `/api/fichas/fichas-estudiantes/{id}/` | Dueño/Docente/Admin | Eliminar ficha |
+| POST | `/api/fichas/fichas-estudiantes/crear_mi_ficha/` | Estudiante | Clonar caso para el estudiante |
+| GET | `/api/fichas/fichas-estudiantes/{id}/historial/` | Autenticado | Versiones históricas |
+| GET | `/api/fichas/fichas-estudiantes/mi_ficha/?caso_clinico={id}` | Estudiante | Ficha propia en un caso |
+
+## Relaciones y protección de datos
+
+```
+Plantilla ──(1:N)──→ CasoClinico ──(1:N)──→ FichaEstudiante ──(1:N)──→ FichaVersion
+                         │
+                    Paciente (1:N)
+```
+
+| Relación | on_delete | Efecto |
+|----------|-----------|--------|
+| CasoClinico → Plantilla | `PROTECT` | No se puede borrar plantilla con casos (backend retorna 409) |
+| CasoClinico → Paciente | `PROTECT` | No se puede borrar paciente con casos (backend retorna 409) |
+| FichaEstudiante → CasoClinico | `PROTECT` | No se puede borrar caso con fichas (backend retorna 409) |
+| FichaEstudiante → Estudiante | `SET_NULL` | Si se borra usuario, fichas se conservan |
+| FichaVersion → FichaEstudiante | `CASCADE` | Si se borra ficha, se borran sus versiones |
+| *.creado_por / *.modificado_por | `SET_NULL` | Trazabilidad se conserva como null |
 
 ## Escalabilidad futura
 
 Para soportar múltiples tipos de atención (Ambulatoria, Intrahospitalaria, etc.):
 
-1. Agregar campo `tipo_atencion = CharField(choices=TipoAtencion.choices)` al modelo `Ficha`.
+1. Agregar campo `tipo_atencion` a `Plantilla`.
 2. El `contenido` JSON tiene estructura diferente según el tipo.
 3. La validación de la estructura puede hacerse en el serializer con un diccionario `CAMPOS_POR_TIPO`.
 4. **No se necesitan modelos nuevos ni migraciones de estructura.**

@@ -11,7 +11,8 @@ Valida un RUT chileno con el algoritmo módulo 11.
 - Verifica largo (7-8 dígitos + dígito verificador).
 - Calcula y compara el dígito verificador.
 - Lanza `ValidationError` si es inválido.
-- **Usado en**: `User.rut`, `Paciente.rut`.
+- **⚠️ Deshabilitada para MVP** (función con `pass`). Permite RUTs ficticios como SIM-001.
+- **Usado en**: `User.rut`, `Paciente.rut` (como validator en el campo, pero no ejecuta lógica actualmente).
 
 ### `format_rut(value)`
 Formatea un RUT al estándar chileno: `XX.XXX.XXX-Y`

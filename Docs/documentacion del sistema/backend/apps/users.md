@@ -17,7 +17,8 @@ Reemplaza el modelo de usuario por defecto. Usa `email` como identificador princ
 | `role` | CharField (Choices) | `ADMIN`, `DOCENTE`, `ESTUDIANTE` |
 | `is_active` | Boolean | Soft delete |
 | `is_staff` | Boolean | Acceso al admin de Django |
-| `date_joined` | DateTimeField | Fecha de registro |
+| `date_joined` | DateTimeField | Fecha de registro (`auto_now_add`) |
+| `updated_at` | DateTimeField | Última actualización (`auto_now`) |
 
 ### Roles (`User.Role`)
 - **ADMIN**: Acceso total al sistema y Django Admin.

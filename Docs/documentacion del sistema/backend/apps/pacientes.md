@@ -28,7 +28,8 @@ Gestiona la base de datos de pacientes clínicos. Es central para la creación d
 - `PacienteSerializer`: Serializa todos los campos + `edad` como campo de solo lectura.
 
 ## Vistas (`views.py`)
-- `PacienteViewSet`: ModelViewSet estándar con búsqueda y permisos por acción.
+- `PacienteViewSet`: ModelViewSet con búsqueda (`SearchFilter` sobre nombre, apellido, rut), ordenado por `apellido, nombre`.
+- **`destroy()`**: Retorna HTTP **409 Conflict** si el paciente tiene casos clínicos asociados (`CasoClinico.paciente`). Mensaje descriptivo en español.
 
 ## Endpoints
 
@@ -39,8 +40,12 @@ Gestiona la base de datos de pacientes clínicos. Es central para la creación d
 | GET | `/api/pacientes/{id}/` | Autenticado | Detalle |
 | POST | `/api/pacientes/` | Docente/Admin | Crear paciente |
 | PUT | `/api/pacientes/{id}/` | Docente/Admin | Actualizar |
-| DELETE | `/api/pacientes/{id}/` | Docente/Admin | Eliminar |
+| DELETE | `/api/pacientes/{id}/` | Docente/Admin | Eliminar (409 si tiene casos clínicos) |
 
 ## Permisos
 - **Lectura**: Cualquier usuario autenticado (estudiantes necesitan ver pacientes para acceder a fichas).
-- **Escritura**: Solo `IsDocenteOrAdmin`.
+- **Escritura/Eliminación**: Solo `IsDocenteOrAdmin`.
+
+## Protección de datos
+- `CasoClinico.paciente` usa `on_delete=PROTECT` → no se puede borrar un paciente con casos clínicos.
+- El ViewSet retorna 409 con mensaje antes de que Django lance `ProtectedError`.
