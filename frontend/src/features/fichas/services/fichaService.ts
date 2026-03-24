@@ -24,7 +24,7 @@ export const createCasoClinico = async (data: { titulo: string; descripcion?: st
     return response.data;
 };
 
-export const updateCasoClinico = async (id: number, data: Partial<CasoClinico>): Promise<CasoClinico> => {
+export const updateCasoClinico = async (id: number, data: { titulo?: string; descripcion?: string; paciente?: number }): Promise<CasoClinico> => {
     const response = await api.patch<CasoClinico>(`/fichas/casos-clinicos/${id}/`, data);
     return response.data;
 };

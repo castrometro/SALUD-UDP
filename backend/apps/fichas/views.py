@@ -2,6 +2,7 @@ from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from django.db import models as db_models
+from django.db.models import Count
 from .models import CasoClinico, FichaEstudiante
 from .serializers import (
     CasoClinicoSerializer,
@@ -28,7 +29,7 @@ class CasoClinicoViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = CasoClinico.objects.select_related(
             'paciente', 'creado_por', 'modificado_por'
-        )
+        ).annotate(total_estudiantes=Count('fichas_estudiantes'))
 
         # Filtrar por paciente
         paciente_id = self.request.query_params.get('paciente')
@@ -36,7 +37,7 @@ class CasoClinicoViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(paciente_id=paciente_id)
 
         # Búsqueda por texto en titulo/descripcion
-        search = self.request.query_params.get('search')
+        search = self.request.query_params.get('search', '').strip()
         if search:
             queryset = queryset.filter(
                 db_models.Q(titulo__icontains=search) |
@@ -69,7 +70,9 @@ class CasoClinicoViewSet(viewsets.ModelViewSet):
         GET /api/fichas/casos-clinicos/{id}/fichas_estudiantes/
         """
         caso = self.get_object()
-        fichas = caso.fichas_estudiantes.select_related('estudiante').order_by('-fecha_creacion')
+        fichas = caso.fichas_estudiantes.select_related('estudiante').annotate(
+            total_versiones=Count('versiones')
+        ).order_by('-fecha_creacion')
 
         page = self.paginate_queryset(fichas)
         if page is not None:
@@ -98,7 +101,7 @@ class FichaEstudianteViewSet(viewsets.ModelViewSet):
         queryset = FichaEstudiante.objects.select_related(
             'caso_clinico', 'caso_clinico__paciente',
             'estudiante', 'creado_por', 'modificado_por'
-        )
+        ).annotate(total_versiones=Count('versiones'))
 
         if user.role not in ['ADMIN', 'DOCENTE']:
             queryset = queryset.filter(estudiante=user)

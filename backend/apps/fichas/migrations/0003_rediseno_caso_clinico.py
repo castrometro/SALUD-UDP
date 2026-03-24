@@ -15,10 +15,30 @@ import django.db.models.deletion
 def copiar_datos_plantilla_a_caso(apps, schema_editor):
     """Copia titulo y descripcion de cada Plantilla a sus CasoClinico hijos."""
     CasoClinico = apps.get_model('fichas', 'CasoClinico')
-    for caso in CasoClinico.objects.select_related('plantilla').all():
+    batch_size = 1000
+    casos_a_actualizar = []
+
+    for caso in CasoClinico.objects.select_related('plantilla').all().iterator():
+        if caso.plantilla_id is None:
+            continue
         caso.titulo = caso.plantilla.titulo
         caso.descripcion = caso.plantilla.descripcion
-        caso.save(update_fields=['titulo', 'descripcion'])
+        casos_a_actualizar.append(caso)
+
+        if len(casos_a_actualizar) >= batch_size:
+            CasoClinico.objects.bulk_update(
+                casos_a_actualizar,
+                ['titulo', 'descripcion'],
+                batch_size=batch_size,
+            )
+            casos_a_actualizar = []
+
+    if casos_a_actualizar:
+        CasoClinico.objects.bulk_update(
+            casos_a_actualizar,
+            ['titulo', 'descripcion'],
+            batch_size=batch_size,
+        )
 
 
 def noop(apps, schema_editor):
