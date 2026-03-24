@@ -9,6 +9,8 @@ import PacienteFormPage from './features/pacientes/pages/PacienteFormPage';
 import PacienteDetailPage from './features/pacientes/pages/PacienteDetailPage';
 import FichaFormPage from './features/fichas/pages/FichaFormPage';
 import FichaDetailPage from './features/fichas/pages/FichaDetailPage';
+import FichaListPage from './features/fichas/pages/FichaListPage';
+import FichaEstudianteDetailPage from './features/fichas/pages/FichaEstudianteDetailPage';
 import EstudianteListPage from './features/estudiantes/pages/EstudianteListPage';
 import EstudianteDetailPage from './features/estudiantes/pages/EstudianteDetailPage';
 import EstudianteFormPage from './features/estudiantes/pages/EstudianteFormPage';
@@ -45,10 +47,12 @@ function App() {
                         <Route path="pacientes/nuevo" element={<PacienteFormPage />} />
                         <Route path="pacientes/:id" element={<PacienteDetailPage />} />
                         <Route path="pacientes/:id/editar" element={<PacienteFormPage />} />
-                        {/* Fichas */}
-                        <Route path="fichas/nueva" element={<FichaFormPage />} />
-                        <Route path="fichas/:id" element={<FichaDetailPage />} />
-                        <Route path="fichas/:id/editar" element={<FichaFormPage />} />
+                        {/* Plantillas / Fichas */}
+                        <Route path="plantillas" element={<FichaListPage />} />
+                        <Route path="plantillas/nueva" element={<FichaFormPage />} />
+                        <Route path="plantillas/:id" element={<FichaDetailPage />} />
+                        <Route path="plantillas/:id/editar" element={<FichaFormPage />} />
+                        <Route path="fichas/estudiante/:id" element={<FichaEstudianteDetailPage />} />
 
                         {/* Estudiantes */}
                         <Route path="estudiantes" element={<EstudianteListPage />} />

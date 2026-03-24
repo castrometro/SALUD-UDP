@@ -5,6 +5,7 @@ import { getPacientes, deletePaciente } from '../services/pacienteService';
 import { Search, Plus, Edit2, Trash2, Eye } from 'lucide-react';
 import { formatRut } from '@/utils/rut';
 import Pagination from '@/components/ui/Pagination';
+import Toast from '@/components/ui/Toast';
 
 const PacienteListPage = () => {
     const [pacientes, setPacientes] = useState<Paciente[]>([]);
@@ -13,6 +14,7 @@ const PacienteListPage = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
     const [totalItems, setTotalItems] = useState(0);
+    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
     const itemsPerPage = 10;
 
     useEffect(() => {
@@ -49,14 +51,18 @@ const PacienteListPage = () => {
         if (!window.confirm(`¿Estás seguro de eliminar al paciente ${paciente.nombre} ${paciente.apellido}?`)) return;
         try {
             await deletePaciente(paciente.id);
+            setToast({ message: 'Paciente eliminado exitosamente', type: 'success' });
             loadPacientes();
-        } catch (error) {
+        } catch (error: any) {
             console.error('Error eliminando paciente', error);
+            const msg = error.response?.data?.detail || 'Error al eliminar el paciente';
+            setToast({ message: msg, type: 'error' });
         }
     };
 
     return (
         <div className="bg-beige">
+            {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Header Section */}
                 <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">

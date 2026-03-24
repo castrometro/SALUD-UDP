@@ -1,12 +1,12 @@
 import { useMemo, type FC } from 'react';
 import { Link } from 'react-router-dom';
 import { User, Calendar } from 'lucide-react';
-import { FichaAmbulatoria } from '../../fichas/types';
+import { FichaEstudiante } from '../../fichas/types';
 import { formatRut } from '@/utils/rut';
 import { Paciente } from '../../pacientes/types';
 
 interface EstudianteCasosTabProps {
-    fichas: FichaAmbulatoria[];
+    fichas: FichaEstudiante[];
 }
 
 interface Caso {
@@ -21,20 +21,21 @@ const EstudianteCasosTab: FC<EstudianteCasosTabProps> = ({ fichas }) => {
         const casosMap = new Map<number, Caso>();
 
         fichas.forEach(ficha => {
-            if (!ficha.paciente_detail) return;
+            const pacienteDetail = ficha.caso_clinico_detail?.paciente_detail;
+            if (!pacienteDetail) return;
 
-            const current = casosMap.get(ficha.paciente_detail.id);
+            const current = casosMap.get(pacienteDetail.id);
             const fechaFicha = ficha.fecha_creacion || '';
 
             if (current) {
-                casosMap.set(ficha.paciente_detail.id, {
+                casosMap.set(pacienteDetail.id, {
                     ...current,
                     ultimaAtencion: fechaFicha > current.ultimaAtencion ? fechaFicha : current.ultimaAtencion,
                     totalFichas: current.totalFichas + 1
                 });
             } else {
-                casosMap.set(ficha.paciente_detail.id, {
-                    paciente: ficha.paciente_detail,
+                casosMap.set(pacienteDetail.id, {
+                    paciente: pacienteDetail,
                     ultimaAtencion: fechaFicha,
                     totalFichas: 1
                 });

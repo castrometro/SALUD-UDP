@@ -1,70 +1,108 @@
 import api from '@/services/api';
-import { FichaAmbulatoria, FichaHistorial } from '../types';
+import { Plantilla, CasoClinico, FichaEstudiante, FichaHistorial } from '../types';
 import { PaginatedResponse } from '@/types/common';
 
-export const getFichas = async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<FichaAmbulatoria>> => {
-    const response = await api.get<PaginatedResponse<FichaAmbulatoria>>(`/fichas/?page=${page}&page_size=${pageSize}`);
-    return response.data;
-};
+// ──────────────────────────────────────────────
+// Plantillas
+// ──────────────────────────────────────────────
 
-export const getFichasPlantillas = async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<FichaAmbulatoria>> => {
-    const response = await api.get<PaginatedResponse<FichaAmbulatoria>>('/fichas/', {
-        params: { plantillas: 'true', page, page_size: pageSize }
+export const getPlantillas = async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Plantilla>> => {
+    const response = await api.get<PaginatedResponse<Plantilla>>('/fichas/plantillas/', {
+        params: { page, page_size: pageSize }
     });
     return response.data;
 };
 
-export const getFichasByPaciente = async (pacienteId: number, page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<FichaAmbulatoria>> => {
-    const response = await api.get<PaginatedResponse<FichaAmbulatoria>>('/fichas/', {
-        params: { paciente: pacienteId, page, page_size: pageSize }
+export const getPlantilla = async (id: number): Promise<Plantilla> => {
+    const response = await api.get<Plantilla>(`/fichas/plantillas/${id}/`);
+    return response.data;
+};
+
+export const createPlantilla = async (data: Partial<Plantilla>): Promise<Plantilla> => {
+    const response = await api.post<Plantilla>('/fichas/plantillas/', data);
+    return response.data;
+};
+
+export const updatePlantilla = async (id: number, data: Partial<Plantilla>): Promise<Plantilla> => {
+    const response = await api.patch<Plantilla>(`/fichas/plantillas/${id}/`, data);
+    return response.data;
+};
+
+export const deletePlantilla = async (id: number): Promise<void> => {
+    await api.delete(`/fichas/plantillas/${id}/`);
+};
+
+// ──────────────────────────────────────────────
+// Casos Clínicos
+// ──────────────────────────────────────────────
+
+export const getCasosClinicos = async (page: number = 1, pageSize: number = 10, plantillaId?: number, pacienteId?: number): Promise<PaginatedResponse<CasoClinico>> => {
+    const params: Record<string, string | number> = { page, page_size: pageSize };
+    if (plantillaId) params.plantilla = plantillaId;
+    if (pacienteId) params.paciente = pacienteId;
+    const response = await api.get<PaginatedResponse<CasoClinico>>('/fichas/casos-clinicos/', { params });
+    return response.data;
+};
+
+export const getCasoClinico = async (id: number): Promise<CasoClinico> => {
+    const response = await api.get<CasoClinico>(`/fichas/casos-clinicos/${id}/`);
+    return response.data;
+};
+
+export const createCasoClinico = async (data: { plantilla: number; paciente: number }): Promise<CasoClinico> => {
+    const response = await api.post<CasoClinico>('/fichas/casos-clinicos/', data);
+    return response.data;
+};
+
+export const deleteCasoClinico = async (id: number): Promise<void> => {
+    await api.delete(`/fichas/casos-clinicos/${id}/`);
+};
+
+export const getFichasEstudiantesDeCaso = async (casoId: number, page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<FichaEstudiante>> => {
+    const response = await api.get<PaginatedResponse<FichaEstudiante>>(
+        `/fichas/casos-clinicos/${casoId}/fichas_estudiantes/`,
+        { params: { page, page_size: pageSize } }
+    );
+    return response.data;
+};
+
+// ──────────────────────────────────────────────
+// Fichas de Estudiantes
+// ──────────────────────────────────────────────
+
+export const getFichasEstudiante = async (page: number = 1, pageSize: number = 10, estudianteId?: number): Promise<PaginatedResponse<FichaEstudiante>> => {
+    const params: Record<string, string | number> = { page, page_size: pageSize };
+    if (estudianteId) params.estudiante = estudianteId;
+    const response = await api.get<PaginatedResponse<FichaEstudiante>>('/fichas/fichas-estudiantes/', { params });
+    return response.data;
+};
+
+export const getFichaEstudiante = async (id: number): Promise<FichaEstudiante> => {
+    const response = await api.get<FichaEstudiante>(`/fichas/fichas-estudiantes/${id}/`);
+    return response.data;
+};
+
+export const updateFichaEstudiante = async (id: number, data: Partial<FichaEstudiante>): Promise<FichaEstudiante> => {
+    const response = await api.patch<FichaEstudiante>(`/fichas/fichas-estudiantes/${id}/`, data);
+    return response.data;
+};
+
+export const deleteFichaEstudiante = async (id: number): Promise<void> => {
+    await api.delete(`/fichas/fichas-estudiantes/${id}/`);
+};
+
+export const crearMiFicha = async (casoClinicoId: number): Promise<FichaEstudiante> => {
+    const response = await api.post<FichaEstudiante>('/fichas/fichas-estudiantes/crear_mi_ficha/', {
+        caso_clinico_id: casoClinicoId
     });
     return response.data;
 };
 
-export const getFichasByEstudiante = async (estudianteId: number, page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<FichaAmbulatoria>> => {
-    const response = await api.get<PaginatedResponse<FichaAmbulatoria>>('/fichas/', {
-        params: { estudiante: estudianteId, page, page_size: pageSize }
-    });
-    return response.data;
-};
-
-export const getFicha = async (id: number): Promise<FichaAmbulatoria> => {
-    const response = await api.get<FichaAmbulatoria>(`/fichas/${id}/`);
-    return response.data;
-};
-
-export const createFicha = async (ficha: Partial<FichaAmbulatoria>): Promise<FichaAmbulatoria> => {
-    // Asegurar que estudiante y ficha_base se envíen como null si no están definidos
-    const dataToSend = {
-        ...ficha,
-        estudiante: ficha.estudiante ?? null,
-        ficha_base: ficha.ficha_base ?? null,
-    };
-    const response = await api.post<FichaAmbulatoria>('/fichas/', dataToSend);
-    return response.data;
-};
-
-export const updateFicha = async (id: number, ficha: Partial<FichaAmbulatoria>): Promise<FichaAmbulatoria> => {
-    const response = await api.patch<FichaAmbulatoria>(`/fichas/${id}/`, ficha);
-    return response.data;
-};
-
-export const deleteFicha = async (id: number): Promise<void> => {
-    await api.delete(`/fichas/${id}/`);
-};
-
-// Crear ficha de estudiante basada en plantilla
-export const crearMiFicha = async (fichaBaseId: number): Promise<FichaAmbulatoria> => {
-    const response = await api.post<FichaAmbulatoria>('/fichas/crear_mi_ficha/', {
-        ficha_base_id: fichaBaseId
-    });
-    return response.data;
-};
-
-// Obtener mi ficha para una plantilla específica
-export const getMiFicha = async (fichaBaseId: number): Promise<FichaAmbulatoria | null> => {
+export const getMiFicha = async (casoClinicoId: number): Promise<FichaEstudiante | null> => {
     try {
-        const response = await api.get<FichaAmbulatoria>(`/fichas/${fichaBaseId}/mi_ficha/`);
+        const response = await api.get<FichaEstudiante>('/fichas/fichas-estudiantes/mi_ficha/', {
+            params: { caso_clinico: casoClinicoId }
+        });
         return response.data;
     } catch (error: any) {
         if (error.response?.status === 404) {
@@ -74,14 +112,7 @@ export const getMiFicha = async (fichaBaseId: number): Promise<FichaAmbulatoria 
     }
 };
 
-// Obtener fichas de estudiantes para una plantilla (solo docentes)
-export const getFichasEstudiantes = async (fichaBaseId: number, page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<FichaAmbulatoria>> => {
-    const response = await api.get<PaginatedResponse<FichaAmbulatoria>>(`/fichas/${fichaBaseId}/fichas_estudiantes/?page=${page}&page_size=${pageSize}`);
-    return response.data;
-};
-
-// Obtener historial de versiones de una ficha
 export const getFichaHistorial = async (fichaId: number): Promise<FichaHistorial[]> => {
-    const response = await api.get<FichaHistorial[]>(`/fichas/${fichaId}/historial/`);
+    const response = await api.get<FichaHistorial[]>(`/fichas/fichas-estudiantes/${fichaId}/historial/`);
     return response.data;
 };

@@ -17,6 +17,10 @@ export default function MenuUsuarioPage() {
     cards.push({ title: "Gestión de Estudiantes", link: "/estudiantes" });
   }
 
+  if (isAdmin || isDocente) {
+    cards.push({ title: "Casos Clínicos", link: "/plantillas" });
+  }
+
   return (
     <>
       <div className="relative">

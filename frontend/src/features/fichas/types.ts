@@ -23,41 +23,79 @@ export const CONTENIDO_DEFAULT: ContenidoClinico = {
     instrumentos_aplicados: '',
 };
 
-export interface FichaBaseInfo {
+// ──────────────────────────────────────────────
+// Plantilla
+// ──────────────────────────────────────────────
+
+export interface Plantilla {
     id: number;
+    titulo: string;
+    descripcion: string;
+    contenido: ContenidoClinico;
+
+    creado_por: number | null;
+    creado_por_nombre: string | null;
+    modificado_por: number | null;
+    modificado_por_nombre: string | null;
+    fecha_creacion: string;
     fecha_modificacion: string;
-    modificado_por_nombre?: string | null;
+
+    total_casos: number;
+    total_estudiantes: number;
 }
 
-export interface FichaAmbulatoria {
-    id: number;
-    paciente: number;
-    paciente_detail?: Paciente;
+// ──────────────────────────────────────────────
+// Caso Clínico
+// ──────────────────────────────────────────────
 
-    es_plantilla: boolean;
-    ficha_base: number | null;
-    ficha_base_info: FichaBaseInfo | null;
+export interface CasoClinico {
+    id: number;
+    plantilla: number;
+    plantilla_titulo: string;
+    paciente: number;
+    paciente_detail: Paciente | null;
+
+    creado_por: number | null;
+    creado_por_nombre: string | null;
+    fecha_creacion: string;
+
+    total_estudiantes: number;
+}
+
+// ──────────────────────────────────────────────
+// Ficha de Estudiante
+// ──────────────────────────────────────────────
+
+export interface FichaEstudiante {
+    id: number;
+    caso_clinico: number;
+    caso_clinico_detail: CasoClinico | null;
     estudiante: number | null;
-    estudiante_nombre?: string | null;
+    estudiante_nombre: string | null;
 
     contenido: ContenidoClinico;
 
-    creado_por?: number | null;
-    creado_por_nombre?: string | null;
-    modificado_por?: number | null;
-    modificado_por_nombre?: string | null;
-    fecha_creacion?: string;
-    fecha_modificacion?: string;
-    total_versiones?: number;
+    creado_por: number | null;
+    creado_por_nombre: string | null;
+    modificado_por: number | null;
+    modificado_por_nombre: string | null;
+    fecha_creacion: string;
+    fecha_modificacion: string;
+
+    total_versiones: number;
 }
+
+// ──────────────────────────────────────────────
+// Historial de versiones
+// ──────────────────────────────────────────────
 
 export interface FichaHistorial {
     id: number;
     ficha: number;
     version: number;
-    autor?: number;
-    autor_nombre?: string;
-    rol_autor?: string;
+    autor: number | null;
+    autor_nombre: string | null;
+    rol_autor: string;
     fecha: string;
     contenido: ContenidoClinico;
 }

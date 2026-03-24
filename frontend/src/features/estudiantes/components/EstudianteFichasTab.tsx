@@ -1,13 +1,13 @@
 import type { FC } from 'react';
 import { Link } from 'react-router-dom';
 import { Eye } from 'lucide-react';
-import { FichaAmbulatoria } from '../../fichas/types';
+import { FichaEstudiante } from '../../fichas/types';
 import { formatRut } from '@/utils/rut';
 
 import Pagination from '@/components/ui/Pagination';
 
 interface EstudianteFichasTabProps {
-    fichas: FichaAmbulatoria[];
+    fichas: FichaEstudiante[];
     pagination?: {
         currentPage: number;
         totalPages: number;
@@ -55,10 +55,10 @@ const EstudianteFichasTab: FC<EstudianteFichasTabProps> = ({ fichas, pagination 
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <div className="flex flex-col">
                                         <span className="text-sm font-medium text-gray-900 font-worksans">
-                                            {ficha.paciente_detail ? `${ficha.paciente_detail.nombre} ${ficha.paciente_detail.apellido}` : 'Paciente desconocido'}
+                                            {ficha.caso_clinico_detail?.paciente_detail ? `${ficha.caso_clinico_detail.paciente_detail.nombre} ${ficha.caso_clinico_detail.paciente_detail.apellido}` : 'Paciente desconocido'}
                                         </span>
                                         <span className="text-xs text-gray-500 font-worksans">
-                                            {ficha.paciente_detail ? formatRut(ficha.paciente_detail.rut) : ''}
+                                            {ficha.caso_clinico_detail?.paciente_detail ? formatRut(ficha.caso_clinico_detail.paciente_detail.rut) : ''}
                                         </span>
                                     </div>
                                 </td>
@@ -69,7 +69,7 @@ const EstudianteFichasTab: FC<EstudianteFichasTabProps> = ({ fichas, pagination 
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                     <Link
-                                        to={`/fichas/${ficha.id}`}
+                                        to={`/fichas/estudiante/${ficha.id}`}
                                         className="text-gray-400 hover:text-blue-600 transition-colors inline-block"
                                     >
                                         <Eye className="w-5 h-5" />

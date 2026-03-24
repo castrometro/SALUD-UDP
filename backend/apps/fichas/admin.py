@@ -1,12 +1,29 @@
 from django.contrib import admin
-from .models import Ficha, FichaVersion
+from .models import Plantilla, CasoClinico, FichaEstudiante, FichaVersion
 
-@admin.register(Ficha)
-class FichaAdmin(admin.ModelAdmin):
-    list_display = ('id', 'paciente', 'es_plantilla', 'estudiante', 'fecha_creacion', 'creado_por')
-    list_filter = ('es_plantilla', 'fecha_creacion', 'creado_por')
-    search_fields = ('paciente__rut', 'paciente__nombre', 'estudiante__email')
-    raw_id_fields = ('paciente', 'estudiante', 'ficha_base', 'creado_por', 'modificado_por')
+
+@admin.register(Plantilla)
+class PlantillaAdmin(admin.ModelAdmin):
+    list_display = ('id', 'titulo', 'creado_por', 'fecha_creacion')
+    list_filter = ('fecha_creacion', 'creado_por')
+    search_fields = ('titulo', 'descripcion')
+    raw_id_fields = ('creado_por', 'modificado_por')
+
+
+@admin.register(CasoClinico)
+class CasoClinicoAdmin(admin.ModelAdmin):
+    list_display = ('id', 'plantilla', 'paciente', 'creado_por', 'fecha_creacion')
+    list_filter = ('fecha_creacion', 'creado_por')
+    search_fields = ('plantilla__titulo', 'paciente__rut', 'paciente__nombre')
+    raw_id_fields = ('plantilla', 'paciente', 'creado_por')
+
+
+@admin.register(FichaEstudiante)
+class FichaEstudianteAdmin(admin.ModelAdmin):
+    list_display = ('id', 'caso_clinico', 'estudiante', 'fecha_creacion', 'modificado_por')
+    list_filter = ('fecha_creacion',)
+    search_fields = ('estudiante__email', 'caso_clinico__plantilla__titulo')
+    raw_id_fields = ('caso_clinico', 'estudiante', 'creado_por', 'modificado_por')
 
 
 @admin.register(FichaVersion)

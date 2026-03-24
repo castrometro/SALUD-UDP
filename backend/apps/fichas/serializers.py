@@ -1,46 +1,84 @@
 from rest_framework import serializers
-from .models import Ficha, FichaVersion, CAMPOS_CLINICOS_DEFAULT
+from .models import Plantilla, CasoClinico, FichaEstudiante, FichaVersion, CAMPOS_CLINICOS_DEFAULT
 from apps.pacientes.serializers import PacienteSerializer
 
 
-class FichaVersionSerializer(serializers.ModelSerializer):
-    autor_nombre = serializers.ReadOnlyField(source='autor.get_full_name')
+# ──────────────────────────────────────────────
+# Plantilla
+# ──────────────────────────────────────────────
 
-    class Meta:
-        model = FichaVersion
-        fields = '__all__'
-
-
-class FichaSerializer(serializers.ModelSerializer):
-    paciente_detail = PacienteSerializer(source='paciente', read_only=True)
+class PlantillaSerializer(serializers.ModelSerializer):
     creado_por_nombre = serializers.ReadOnlyField(source='creado_por.get_full_name')
     modificado_por_nombre = serializers.ReadOnlyField(source='modificado_por.get_full_name')
-    estudiante_nombre = serializers.ReadOnlyField(source='estudiante.get_full_name')
-    ficha_base_info = serializers.SerializerMethodField()
-    total_versiones = serializers.SerializerMethodField()
+    total_casos = serializers.SerializerMethodField()
+    total_estudiantes = serializers.SerializerMethodField()
 
     class Meta:
-        model = Ficha
+        model = Plantilla
         fields = '__all__'
         read_only_fields = ('creado_por', 'modificado_por', 'fecha_creacion', 'fecha_modificacion')
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        if 'estudiante' in self.fields:
-            self.fields['estudiante'].required = False
-            self.fields['estudiante'].allow_null = True
-        if 'ficha_base' in self.fields:
-            self.fields['ficha_base'].required = False
-            self.fields['ficha_base'].allow_null = True
+    def get_total_casos(self, obj):
+        return obj.casos_clinicos.count()
 
-    def get_ficha_base_info(self, obj):
-        if obj.ficha_base:
-            return {
-                'id': obj.ficha_base.id,
-                'fecha_modificacion': obj.ficha_base.fecha_modificacion,
-                'modificado_por_nombre': obj.ficha_base.modificado_por.get_full_name() if obj.ficha_base.modificado_por else None
-            }
-        return None
+    def get_total_estudiantes(self, obj):
+        return FichaEstudiante.objects.filter(caso_clinico__plantilla=obj).count()
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['creado_por'] = request.user
+        if not validated_data.get('contenido'):
+            validated_data['contenido'] = CAMPOS_CLINICOS_DEFAULT.copy()
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['modificado_por'] = request.user
+        return super().update(instance, validated_data)
+
+
+# ──────────────────────────────────────────────
+# Caso Clínico
+# ──────────────────────────────────────────────
+
+class CasoClinicoSerializer(serializers.ModelSerializer):
+    paciente_detail = PacienteSerializer(source='paciente', read_only=True)
+    plantilla_titulo = serializers.ReadOnlyField(source='plantilla.titulo')
+    creado_por_nombre = serializers.ReadOnlyField(source='creado_por.get_full_name')
+    total_estudiantes = serializers.SerializerMethodField()
+
+    class Meta:
+        model = CasoClinico
+        fields = '__all__'
+        read_only_fields = ('creado_por', 'fecha_creacion')
+
+    def get_total_estudiantes(self, obj):
+        return obj.fichas_estudiantes.count()
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['creado_por'] = request.user
+        return super().create(validated_data)
+
+
+# ──────────────────────────────────────────────
+# Ficha de Estudiante
+# ──────────────────────────────────────────────
+
+class FichaEstudianteSerializer(serializers.ModelSerializer):
+    estudiante_nombre = serializers.ReadOnlyField(source='estudiante.get_full_name')
+    creado_por_nombre = serializers.ReadOnlyField(source='creado_por.get_full_name')
+    modificado_por_nombre = serializers.ReadOnlyField(source='modificado_por.get_full_name')
+    caso_clinico_detail = CasoClinicoSerializer(source='caso_clinico', read_only=True)
+    total_versiones = serializers.SerializerMethodField()
+
+    class Meta:
+        model = FichaEstudiante
+        fields = '__all__'
+        read_only_fields = ('creado_por', 'modificado_por', 'fecha_creacion', 'fecha_modificacion')
 
     def get_total_versiones(self, obj):
         return obj.versiones.count()
@@ -50,7 +88,12 @@ class FichaSerializer(serializers.ModelSerializer):
         if request and hasattr(request, 'user'):
             validated_data['creado_por'] = request.user
         if not validated_data.get('contenido'):
-            validated_data['contenido'] = CAMPOS_CLINICOS_DEFAULT.copy()
+            # Copiar contenido de la plantilla del caso
+            caso = validated_data.get('caso_clinico')
+            if caso and caso.plantilla.contenido:
+                validated_data['contenido'] = caso.plantilla.contenido.copy()
+            else:
+                validated_data['contenido'] = CAMPOS_CLINICOS_DEFAULT.copy()
         return super().create(validated_data)
 
     def update(self, instance, validated_data):
@@ -78,37 +121,51 @@ class FichaSerializer(serializers.ModelSerializer):
         )
 
 
-class CrearFichaEstudianteSerializer(serializers.Serializer):
-    """Serializer para crear una ficha de estudiante basada en una plantilla"""
-    ficha_base_id = serializers.IntegerField()
+# ──────────────────────────────────────────────
+# Ficha Version (historial)
+# ──────────────────────────────────────────────
 
-    def validate_ficha_base_id(self, value):
+class FichaVersionSerializer(serializers.ModelSerializer):
+    autor_nombre = serializers.ReadOnlyField(source='autor.get_full_name')
+
+    class Meta:
+        model = FichaVersion
+        fields = '__all__'
+
+
+# ──────────────────────────────────────────────
+# Crear ficha de estudiante (endpoint especial)
+# ──────────────────────────────────────────────
+
+class CrearFichaEstudianteSerializer(serializers.Serializer):
+    """Serializer para que un estudiante cree su ficha en un caso clínico."""
+    caso_clinico_id = serializers.IntegerField()
+
+    def validate_caso_clinico_id(self, value):
         try:
-            Ficha.objects.get(id=value, es_plantilla=True)
-        except Ficha.DoesNotExist:
-            raise serializers.ValidationError("La ficha base no existe o no es una plantilla")
+            CasoClinico.objects.get(id=value)
+        except CasoClinico.DoesNotExist:
+            raise serializers.ValidationError("El caso clínico no existe")
         return value
 
     def create(self, validated_data):
         request = self.context.get('request')
         user = request.user
-        ficha_base = Ficha.objects.get(id=validated_data['ficha_base_id'])
+        caso = CasoClinico.objects.get(id=validated_data['caso_clinico_id'])
 
-        existing = Ficha.objects.filter(
-            ficha_base=ficha_base,
+        existing = FichaEstudiante.objects.filter(
+            caso_clinico=caso,
             estudiante=user
         ).first()
 
         if existing:
-            raise serializers.ValidationError("Ya tienes una ficha para este caso")
+            raise serializers.ValidationError("Ya tienes una ficha para este caso clínico")
 
-        ficha_estudiante = Ficha.objects.create(
-            paciente=ficha_base.paciente,
-            es_plantilla=False,
-            ficha_base=ficha_base,
+        ficha_estudiante = FichaEstudiante.objects.create(
+            caso_clinico=caso,
             estudiante=user,
             creado_por=user,
-            contenido=ficha_base.contenido.copy() if ficha_base.contenido else CAMPOS_CLINICOS_DEFAULT.copy(),
+            contenido=caso.plantilla.contenido.copy() if caso.plantilla.contenido else CAMPOS_CLINICOS_DEFAULT.copy(),
         )
 
         return ficha_estudiante
