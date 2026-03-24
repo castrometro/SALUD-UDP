@@ -26,7 +26,7 @@ const PacienteDetailPage = () => {
         try {
             const [pacienteData, casosData] = await Promise.all([
                 getPaciente(pacienteId),
-                getCasosClinicos(1, 1000, undefined, pacienteId)
+                getCasosClinicos(1, 1000, pacienteId)
             ]);
             setPaciente(pacienteData);
             setCasos(casosData.results);
@@ -133,7 +133,7 @@ const PacienteDetailPage = () => {
                         <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
                         <p className="text-gray-500 font-worksans text-lg">No hay casos clínicos asignados a este paciente.</p>
                         <p className="text-gray-400 font-worksans text-sm mt-2">
-                            Asigne un caso desde el detalle de una plantilla.
+                            Cree un caso clínico y asígnelo a este paciente.
                         </p>
                     </div>
                 ) : (
@@ -152,7 +152,7 @@ const PacienteDetailPage = () => {
                                             </span>
                                         </div>
                                         <h3 className="text-lg font-bold text-gray-900 font-arizona mb-1">
-                                            {caso.plantilla_titulo}
+                                            {caso.titulo}
                                         </h3>
                                         <div className="flex items-center gap-4 mt-2">
                                             <span className="flex items-center text-sm text-gray-600 font-worksans">
@@ -168,9 +168,9 @@ const PacienteDetailPage = () => {
                                             <p className="text-sm font-medium text-gray-900 font-worksans">{caso.creado_por_nombre}</p>
                                         </div>
                                         <Link
-                                            to={`/plantillas/${caso.plantilla}`}
+                                            to={`/casos-clinicos/${caso.id}`}
                                             className="p-2 text-gray-400 hover:text-aqua hover:bg-aqua/5 rounded-full transition-colors"
-                                            title="Ver plantilla"
+                                            title="Ver caso clínico"
                                         >
                                             <FileText className="w-6 h-6" />
                                         </Link>

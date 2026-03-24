@@ -1,41 +1,22 @@
 import pytest
-from apps.fichas.models import Plantilla, CasoClinico, FichaEstudiante
-from .factories import PlantillaFactory, CasoClinicoFactory, FichaEstudianteFactory
+from apps.fichas.models import CasoClinico, FichaEstudiante, CAMPOS_CLINICOS_DEFAULT
+from .factories import CasoClinicoFactory, FichaEstudianteFactory
 from apps.users.tests.factories import UserFactory
-
-
-@pytest.mark.django_db
-class TestPlantillaModel:
-    def test_crear_plantilla(self):
-        """Prueba básica: Crear una plantilla"""
-        plantilla = PlantillaFactory(titulo="Diabetes + cocaína")
-        assert plantilla.titulo == "Diabetes + cocaína"
-        assert Plantilla.objects.count() == 1
-
-    def test_plantilla_contenido_default(self):
-        """La plantilla tiene contenido JSON por defecto"""
-        plantilla = PlantillaFactory()
-        assert 'motivo_consulta' in plantilla.contenido
 
 
 @pytest.mark.django_db
 class TestCasoClinicoModel:
     def test_crear_caso_clinico(self):
-        """Crear un caso clínico asignando plantilla a paciente"""
-        caso = CasoClinicoFactory()
-        assert caso.plantilla is not None
+        """Crear un caso clínico con titulo, descripcion y paciente"""
+        caso = CasoClinicoFactory(titulo="Consulta por cefalea tensional")
+        assert caso.titulo == "Consulta por cefalea tensional"
         assert caso.paciente is not None
         assert CasoClinico.objects.count() == 1
 
-    def test_unique_paciente_por_plantilla(self):
-        """No se puede asignar el mismo paciente a la misma plantilla dos veces"""
-        caso = CasoClinicoFactory()
-        with pytest.raises(Exception):
-            CasoClinico.objects.create(
-                plantilla=caso.plantilla,
-                paciente=caso.paciente,
-                creado_por=caso.creado_por,
-            )
+    def test_caso_clinico_descripcion(self):
+        """El caso clínico puede tener una narrativa descriptiva"""
+        caso = CasoClinicoFactory(descripcion="Paciente de 65 años con dolor torácico")
+        assert "dolor torácico" in caso.descripcion
 
 
 @pytest.mark.django_db
@@ -47,19 +28,12 @@ class TestFichaEstudianteModel:
         assert ficha.caso_clinico is not None
         assert FichaEstudiante.objects.count() == 1
 
-    def test_contenido_hereda_plantilla(self):
-        """El contenido de la ficha del estudiante copia el de la plantilla"""
-        plantilla = PlantillaFactory(contenido={
-            'motivo_consulta': 'Dolor de cabeza',
-            'anamnesis': 'Paciente refiere...',
-        })
-        caso = CasoClinicoFactory(plantilla=plantilla)
-        ficha = FichaEstudiante.objects.create(
-            caso_clinico=caso,
-            estudiante=UserFactory(role='ESTUDIANTE'),
-            contenido=caso.plantilla.contenido.copy(),
-        )
-        assert ficha.contenido['motivo_consulta'] == 'Dolor de cabeza'
+    def test_contenido_arranca_vacio(self):
+        """La ficha del estudiante arranca con campos clínicos vacíos"""
+        ficha = FichaEstudianteFactory()
+        assert ficha.contenido['motivo_consulta'] == ''
+        assert ficha.contenido['diagnostico'] == ''
+        assert set(ficha.contenido.keys()) == set(CAMPOS_CLINICOS_DEFAULT.keys())
 
     def test_unique_estudiante_por_caso(self):
         """Un estudiante no puede tener dos fichas en el mismo caso"""

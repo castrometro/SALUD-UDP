@@ -1,10 +1,9 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from django.db.models import ProtectedError
-from .models import Plantilla, CasoClinico, FichaEstudiante
+from django.db import models as db_models
+from .models import CasoClinico, FichaEstudiante
 from .serializers import (
-    PlantillaSerializer,
     CasoClinicoSerializer,
     FichaEstudianteSerializer,
     FichaVersionSerializer,
@@ -14,62 +13,35 @@ from apps.users.permissions import IsOwnerOrDocenteOrAdmin
 
 
 # ──────────────────────────────────────────────
-# Plantilla ViewSet
-# ──────────────────────────────────────────────
-
-class PlantillaViewSet(viewsets.ModelViewSet):
-    """CRUD de plantillas. Solo docentes/admin pueden crear y editar."""
-    serializer_class = PlantillaSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get_queryset(self):
-        return Plantilla.objects.select_related('creado_por', 'modificado_por')
-
-    def get_permissions(self):
-        if self.action in ['create', 'update', 'partial_update', 'destroy']:
-            permission_classes = [permissions.IsAuthenticated, IsOwnerOrDocenteOrAdmin]
-        else:
-            permission_classes = [permissions.IsAuthenticated]
-        return [permission() for permission in permission_classes]
-
-    def destroy(self, request, *args, **kwargs):
-        plantilla = self.get_object()
-        total_casos = plantilla.casos_clinicos.count()
-        if total_casos > 0:
-            return Response(
-                {'detail': f'No se puede eliminar la plantilla porque tiene {total_casos} caso(s) clínico(s) asignado(s). Elimínalos primero.'},
-                status=status.HTTP_409_CONFLICT
-            )
-        return super().destroy(request, *args, **kwargs)
-
-
-# ──────────────────────────────────────────────
-# Caso Clínico ViewSet
+# Caso Clínico ViewSet (entidad principal)
 # ──────────────────────────────────────────────
 
 class CasoClinicoViewSet(viewsets.ModelViewSet):
     """
-    Gestión de casos clínicos (plantilla + paciente).
-    - Docentes/admin: ven y crean todos.
-    - Estudiantes: solo ven los que existen (para unirse).
+    CRUD de casos clínicos. Entidad principal del módulo de fichas.
+    - Docentes/admin: crean, editan y eliminan casos.
+    - Estudiantes: solo lectura (para ver los casos disponibles y unirse).
     """
     serializer_class = CasoClinicoSerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
         queryset = CasoClinico.objects.select_related(
-            'plantilla', 'paciente', 'creado_por'
+            'paciente', 'creado_por', 'modificado_por'
         )
-
-        # Filtrar por plantilla
-        plantilla_id = self.request.query_params.get('plantilla')
-        if plantilla_id:
-            queryset = queryset.filter(plantilla_id=plantilla_id)
 
         # Filtrar por paciente
         paciente_id = self.request.query_params.get('paciente')
         if paciente_id:
             queryset = queryset.filter(paciente_id=paciente_id)
+
+        # Búsqueda por texto en titulo/descripcion
+        search = self.request.query_params.get('search')
+        if search:
+            queryset = queryset.filter(
+                db_models.Q(titulo__icontains=search) |
+                db_models.Q(descripcion__icontains=search)
+            )
 
         return queryset
 
@@ -94,7 +66,7 @@ class CasoClinicoViewSet(viewsets.ModelViewSet):
     def fichas_estudiantes(self, request, pk=None):
         """
         Lista las fichas de estudiantes de un caso clínico.
-        GET /api/casos-clinicos/{id}/fichas_estudiantes/
+        GET /api/fichas/casos-clinicos/{id}/fichas_estudiantes/
         """
         caso = self.get_object()
         fichas = caso.fichas_estudiantes.select_related('estudiante').order_by('-fecha_creacion')
@@ -124,7 +96,7 @@ class FichaEstudianteViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         queryset = FichaEstudiante.objects.select_related(
-            'caso_clinico', 'caso_clinico__plantilla', 'caso_clinico__paciente',
+            'caso_clinico', 'caso_clinico__paciente',
             'estudiante', 'creado_por', 'modificado_por'
         )
 

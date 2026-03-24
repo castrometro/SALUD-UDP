@@ -24,14 +24,15 @@ export const CONTENIDO_DEFAULT: ContenidoClinico = {
 };
 
 // ──────────────────────────────────────────────
-// Plantilla
+// Caso Clínico (entidad principal)
 // ──────────────────────────────────────────────
 
-export interface Plantilla {
+export interface CasoClinico {
     id: number;
     titulo: string;
     descripcion: string;
-    contenido: ContenidoClinico;
+    paciente: number;
+    paciente_detail: Paciente | null;
 
     creado_por: number | null;
     creado_por_nombre: string | null;
@@ -39,25 +40,6 @@ export interface Plantilla {
     modificado_por_nombre: string | null;
     fecha_creacion: string;
     fecha_modificacion: string;
-
-    total_casos: number;
-    total_estudiantes: number;
-}
-
-// ──────────────────────────────────────────────
-// Caso Clínico
-// ──────────────────────────────────────────────
-
-export interface CasoClinico {
-    id: number;
-    plantilla: number;
-    plantilla_titulo: string;
-    paciente: number;
-    paciente_detail: Paciente | null;
-
-    creado_por: number | null;
-    creado_por_nombre: string | null;
-    fecha_creacion: string;
 
     total_estudiantes: number;
 }

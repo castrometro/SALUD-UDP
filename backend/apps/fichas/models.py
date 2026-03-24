@@ -16,43 +16,10 @@ CAMPOS_CLINICOS_DEFAULT = {
 }
 
 
-class Plantilla(models.Model):
-    """Contenido clínico reutilizable, sin paciente. Creada por docentes."""
-    titulo = models.CharField(max_length=255, help_text="Nombre descriptivo del caso clínico")
-    descripcion = models.TextField(blank=True, default='', help_text="Descripción breve del caso")
-    contenido = models.JSONField(
-        default=dict,
-        blank=True,
-        help_text="Campos clínicos de la plantilla en formato JSON"
-    )
-
-    # Trazabilidad
-    creado_por = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, related_name="plantillas_creadas"
-    )
-    modificado_por = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, blank=True, related_name="plantillas_modificadas"
-    )
-    fecha_creacion = models.DateTimeField(auto_now_add=True)
-    fecha_modificacion = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "Plantilla"
-        verbose_name_plural = "Plantillas"
-        ordering = ['-fecha_creacion']
-
-    def __str__(self):
-        return f"Plantilla {self.id} - {self.titulo}"
-
-
 class CasoClinico(models.Model):
-    """Instancia de trabajo: una plantilla asignada a un paciente."""
-    plantilla = models.ForeignKey(
-        Plantilla, on_delete=models.PROTECT,
-        related_name="casos_clinicos"
-    )
+    """Escenario clínico creado por el docente. Entidad principal del módulo de fichas."""
+    titulo = models.CharField(max_length=255, help_text="Nombre descriptivo del caso clínico")
+    descripcion = models.TextField(blank=True, default='', help_text="Narrativa completa del escenario clínico")
     paciente = models.ForeignKey(
         Paciente, on_delete=models.PROTECT,
         related_name="casos_clinicos"
@@ -63,21 +30,20 @@ class CasoClinico(models.Model):
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
         null=True, related_name="casos_creados"
     )
+    modificado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, blank=True, related_name="casos_modificados"
+    )
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    fecha_modificacion = models.DateTimeField(auto_now=True)
 
     class Meta:
         verbose_name = "Caso Clínico"
         verbose_name_plural = "Casos Clínicos"
         ordering = ['-fecha_creacion']
-        constraints = [
-            models.UniqueConstraint(
-                fields=['plantilla', 'paciente'],
-                name='unique_paciente_por_plantilla'
-            )
-        ]
 
     def __str__(self):
-        return f"Caso {self.id} - {self.plantilla.titulo} → {self.paciente}"
+        return f"Caso {self.id} - {self.titulo} → {self.paciente}"
 
 
 class FichaEstudiante(models.Model):
