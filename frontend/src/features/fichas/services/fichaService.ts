@@ -1,45 +1,15 @@
 import api from '@/services/api';
-import { Plantilla, CasoClinico, FichaEstudiante, FichaHistorial } from '../types';
+import { CasoClinico, FichaEstudiante, FichaHistorial } from '../types';
 import { PaginatedResponse } from '@/types/common';
-
-// ──────────────────────────────────────────────
-// Plantillas
-// ──────────────────────────────────────────────
-
-export const getPlantillas = async (page: number = 1, pageSize: number = 10): Promise<PaginatedResponse<Plantilla>> => {
-    const response = await api.get<PaginatedResponse<Plantilla>>('/fichas/plantillas/', {
-        params: { page, page_size: pageSize }
-    });
-    return response.data;
-};
-
-export const getPlantilla = async (id: number): Promise<Plantilla> => {
-    const response = await api.get<Plantilla>(`/fichas/plantillas/${id}/`);
-    return response.data;
-};
-
-export const createPlantilla = async (data: Partial<Plantilla>): Promise<Plantilla> => {
-    const response = await api.post<Plantilla>('/fichas/plantillas/', data);
-    return response.data;
-};
-
-export const updatePlantilla = async (id: number, data: Partial<Plantilla>): Promise<Plantilla> => {
-    const response = await api.patch<Plantilla>(`/fichas/plantillas/${id}/`, data);
-    return response.data;
-};
-
-export const deletePlantilla = async (id: number): Promise<void> => {
-    await api.delete(`/fichas/plantillas/${id}/`);
-};
 
 // ──────────────────────────────────────────────
 // Casos Clínicos
 // ──────────────────────────────────────────────
 
-export const getCasosClinicos = async (page: number = 1, pageSize: number = 10, plantillaId?: number, pacienteId?: number): Promise<PaginatedResponse<CasoClinico>> => {
+export const getCasosClinicos = async (page: number = 1, pageSize: number = 10, pacienteId?: number, search?: string): Promise<PaginatedResponse<CasoClinico>> => {
     const params: Record<string, string | number> = { page, page_size: pageSize };
-    if (plantillaId) params.plantilla = plantillaId;
     if (pacienteId) params.paciente = pacienteId;
+    if (search) params.search = search;
     const response = await api.get<PaginatedResponse<CasoClinico>>('/fichas/casos-clinicos/', { params });
     return response.data;
 };
@@ -49,8 +19,13 @@ export const getCasoClinico = async (id: number): Promise<CasoClinico> => {
     return response.data;
 };
 
-export const createCasoClinico = async (data: { plantilla: number; paciente: number }): Promise<CasoClinico> => {
+export const createCasoClinico = async (data: { titulo: string; descripcion?: string; paciente: number }): Promise<CasoClinico> => {
     const response = await api.post<CasoClinico>('/fichas/casos-clinicos/', data);
+    return response.data;
+};
+
+export const updateCasoClinico = async (id: number, data: { titulo?: string; descripcion?: string; paciente?: number }): Promise<CasoClinico> => {
+    const response = await api.patch<CasoClinico>(`/fichas/casos-clinicos/${id}/`, data);
     return response.data;
 };
 

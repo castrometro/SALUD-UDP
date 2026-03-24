@@ -1,24 +1,16 @@
 import factory
 from factory.django import DjangoModelFactory
-from apps.fichas.models import Plantilla, CasoClinico, FichaEstudiante, CAMPOS_CLINICOS_DEFAULT
+from apps.fichas.models import CasoClinico, FichaEstudiante, CAMPOS_CLINICOS_DEFAULT
 from apps.pacientes.tests.factories import PacienteFactory
 from apps.users.tests.factories import UserFactory
-
-
-class PlantillaFactory(DjangoModelFactory):
-    class Meta:
-        model = Plantilla
-
-    titulo = factory.Sequence(lambda n: f"Caso clínico {n}")
-    contenido = factory.LazyFunction(lambda: CAMPOS_CLINICOS_DEFAULT.copy())
-    creado_por = factory.SubFactory(UserFactory, role='DOCENTE')
 
 
 class CasoClinicoFactory(DjangoModelFactory):
     class Meta:
         model = CasoClinico
 
-    plantilla = factory.SubFactory(PlantillaFactory)
+    titulo = factory.Sequence(lambda n: f"Caso clínico {n}")
+    descripcion = factory.Faker('paragraph', nb_sentences=3, locale='es_CL')
     paciente = factory.SubFactory(PacienteFactory)
     creado_por = factory.SubFactory(UserFactory, role='DOCENTE')
 

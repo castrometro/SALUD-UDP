@@ -125,7 +125,7 @@ const FichaEstudianteDetailPage = () => {
         setIsProcessing(true);
         try {
             await deleteFichaEstudiante(parseInt(id));
-            navigate('/plantillas');
+            navigate('/casos-clinicos');
         } catch (error: any) {
             console.error('Error deleting ficha', error);
             const msg = error.response?.data?.detail || 'Error al eliminar la ficha';
@@ -169,8 +169,8 @@ const FichaEstudianteDetailPage = () => {
                     <AlertCircle className="w-16 h-16 text-red-400 mx-auto mb-4" />
                     <h2 className="text-xl font-semibold text-gray-900 mb-2">Ficha no encontrada</h2>
                     <p className="text-gray-600 mb-4">La ficha que buscas no existe o fue eliminada.</p>
-                    <Link to="/plantillas" className="text-aqua hover:text-blue-600 font-medium">
-                        Volver a Plantillas
+                    <Link to="/casos-clinicos" className="text-aqua hover:text-blue-600 font-medium">
+                        Volver a Casos Clínicos
                     </Link>
                 </div>
             </div>
@@ -188,11 +188,11 @@ const FichaEstudianteDetailPage = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex gap-4">
                     {caso && (
                         <Link
-                            to={`/plantillas/${caso.plantilla}`}
+                            to={`/casos-clinicos/${caso.id}`}
                             className="inline-flex items-center text-gray-500 hover:text-aqua transition-colors font-worksans"
                         >
                             <ChevronLeft className="w-5 h-5 mr-1" />
-                            {caso.plantilla_titulo}
+                            {caso.titulo}
                         </Link>
                     )}
                     {paciente && (
@@ -228,7 +228,7 @@ const FichaEstudianteDetailPage = () => {
                         </span>
                         {caso && (
                             <span className="px-3 py-1 rounded-full bg-purple-100 text-purple-800 text-sm font-worksans">
-                                Plantilla: {caso.plantilla_titulo}
+                                Caso: {caso.titulo}
                             </span>
                         )}
                     </div>
@@ -263,6 +263,18 @@ const FichaEstudianteDetailPage = () => {
                 {/* TAB: Caso Clínico */}
                 {activeTab === 'caso' && (
                     <div className="bg-white shadow-md rounded-lg p-6 mb-8">
+                        {/* Descripción del caso como referencia */}
+                        {caso?.descripcion && (
+                            <details className="mb-6 border border-blue-200 rounded-lg">
+                                <summary className="cursor-pointer px-4 py-3 bg-blue-50 rounded-lg font-worksans font-medium text-blue-800 text-sm hover:bg-blue-100 transition-colors">
+                                    Ver descripción del caso clínico
+                                </summary>
+                                <div className="px-4 py-3 font-worksans text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">
+                                    {caso.descripcion}
+                                </div>
+                            </details>
+                        )}
+
                         {selectedVersion && (
                             <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg">
                                 <div className="flex items-center justify-between">

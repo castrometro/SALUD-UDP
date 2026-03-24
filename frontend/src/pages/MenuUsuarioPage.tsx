@@ -18,7 +18,7 @@ export default function MenuUsuarioPage() {
   }
 
   if (isAdmin || isDocente) {
-    cards.push({ title: "Casos Clínicos", link: "/plantillas" });
+    cards.push({ title: "Casos Clínicos", link: "/casos-clinicos" });
   }
 
   return (

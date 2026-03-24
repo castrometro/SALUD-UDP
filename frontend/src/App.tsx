@@ -47,11 +47,11 @@ function App() {
                         <Route path="pacientes/nuevo" element={<PacienteFormPage />} />
                         <Route path="pacientes/:id" element={<PacienteDetailPage />} />
                         <Route path="pacientes/:id/editar" element={<PacienteFormPage />} />
-                        {/* Plantillas / Fichas */}
-                        <Route path="plantillas" element={<FichaListPage />} />
-                        <Route path="plantillas/nueva" element={<FichaFormPage />} />
-                        <Route path="plantillas/:id" element={<FichaDetailPage />} />
-                        <Route path="plantillas/:id/editar" element={<FichaFormPage />} />
+                        {/* Casos Clínicos / Fichas */}
+                        <Route path="casos-clinicos" element={<FichaListPage />} />
+                        <Route path="casos-clinicos/nuevo" element={<FichaFormPage />} />
+                        <Route path="casos-clinicos/:id" element={<FichaDetailPage />} />
+                        <Route path="casos-clinicos/:id/editar" element={<FichaFormPage />} />
                         <Route path="fichas/estudiante/:id" element={<FichaEstudianteDetailPage />} />
 
                         {/* Estudiantes */}
