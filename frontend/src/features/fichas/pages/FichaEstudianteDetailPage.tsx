@@ -96,12 +96,21 @@ const FichaEstudianteDetailPage = () => {
         } : null);
     };
 
+    const handleFechaAtencionChange = (e: ChangeEvent<HTMLInputElement>) => {
+        const value = e.target.value || null;
+        setEditableFicha(prev => prev ? { ...prev, fecha_atencion: value } : null);
+    };
+
     const handleSave = async () => {
         if (!id || !editableFicha) return;
         setIsProcessing(true);
         setError(null);
         try {
-            const updated = await updateFichaEstudiante(parseInt(id), { contenido: editableFicha.contenido });
+            const payload: Partial<FichaEstudiante> = { contenido: editableFicha.contenido };
+            if (isDocente) {
+                payload.fecha_atencion = editableFicha.fecha_atencion;
+            }
+            const updated = await updateFichaEstudiante(parseInt(id), payload);
             setFicha(updated);
             setEditableFicha(updated);
             setIsEditing(false);
@@ -327,6 +336,26 @@ const FichaEstudianteDetailPage = () => {
                                         <p><span className="font-semibold">Fecha:</span> {created.date} - {created.time}</p>
                                         <p className="mt-2"><span className="font-semibold">Última Modificación:</span> {ficha.modificado_por_nombre || "Desconocido"}</p>
                                         <p><span className="font-semibold">Fecha:</span> {modified.date} - {modified.time}</p>
+
+                                        {/* Fecha de atención pública */}
+                                        <div className="mt-3">
+                                            <label className="font-semibold block mb-1">Fecha de Atención:</label>
+                                            {isEditing && isDocente ? (
+                                                <input
+                                                    type="date"
+                                                    value={editableFicha.fecha_atencion ?? ''}
+                                                    onChange={handleFechaAtencionChange}
+                                                    className="border border-gray-300 rounded-md px-2 py-1 text-sm"
+                                                />
+                                            ) : (
+                                                <span>
+                                                    {ficha.fecha_atencion
+                                                        ? new Date(ficha.fecha_atencion + 'T00:00:00').toLocaleDateString('es-CL')
+                                                        : <span className="text-gray-400 italic">Sin fecha asignada</span>
+                                                    }
+                                                </span>
+                                            )}
+                                        </div>
                                     </>
                                 )}
                             </div>

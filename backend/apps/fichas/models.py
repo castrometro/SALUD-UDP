@@ -62,6 +62,14 @@ class FichaEstudiante(models.Model):
         help_text="Campos clínicos de la ficha del estudiante"
     )
 
+    # Fecha de atención: pública, visible al estudiante, editable por el docente.
+    # fecha_creacion actúa como fecha de registro real (oculta al estudiante).
+    fecha_atencion = models.DateField(
+        null=True,
+        blank=True,
+        help_text="Fecha de atención simulada, visible para el estudiante"
+    )
+
     # Trazabilidad
     creado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,

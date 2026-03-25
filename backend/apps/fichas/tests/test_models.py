@@ -2,6 +2,7 @@ import pytest
 from apps.fichas.models import CasoClinico, FichaEstudiante, CAMPOS_CLINICOS_DEFAULT
 from .factories import CasoClinicoFactory, FichaEstudianteFactory
 from apps.users.tests.factories import UserFactory
+import datetime
 
 
 @pytest.mark.django_db
@@ -44,3 +45,22 @@ class TestFichaEstudianteModel:
                 estudiante=ficha.estudiante,
                 contenido={},
             )
+
+    def test_fecha_atencion_nula_por_defecto(self):
+        """La fecha de atención es nula por defecto al crear la ficha"""
+        ficha = FichaEstudianteFactory()
+        assert ficha.fecha_atencion is None
+
+    def test_fecha_atencion_puede_asignarse(self):
+        """El docente puede asignar una fecha de atención pública a la ficha"""
+        fecha = datetime.date(2026, 3, 25)
+        ficha = FichaEstudianteFactory(fecha_atencion=fecha)
+        assert ficha.fecha_atencion == fecha
+
+    def test_fecha_creacion_distinta_de_fecha_atencion(self):
+        """fecha_creacion (registro real) y fecha_atencion (pública) son campos distintos"""
+        fecha_publica = datetime.date(2026, 1, 1)
+        ficha = FichaEstudianteFactory(fecha_atencion=fecha_publica)
+        assert ficha.fecha_creacion is not None
+        assert ficha.fecha_atencion == fecha_publica
+

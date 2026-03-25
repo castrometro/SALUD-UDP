@@ -57,6 +57,10 @@ export interface FichaEstudiante {
 
     contenido: ContenidoClinico;
 
+    // Fecha de atención pública (visible al estudiante, editable por el docente).
+    // fecha_creacion es la fecha de registro real (solo lectura, uso interno).
+    fecha_atencion: string | null;
+
     creado_por: number | null;
     creado_por_nombre: string | null;
     modificado_por: number | null;
