@@ -29,7 +29,7 @@ class CasoClinicoViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = CasoClinico.objects.select_related(
             'paciente', 'creado_por', 'modificado_por'
-        ).annotate(total_estudiantes=Count('fichas_estudiantes'))
+        ).annotate(total_estudiantes=Count('fichas_estudiantes')).order_by('-fecha_creacion')
 
         # Filtrar por paciente
         paciente_id = self.request.query_params.get('paciente')
