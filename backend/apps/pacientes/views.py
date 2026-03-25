@@ -23,10 +23,10 @@ class PacienteViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         paciente = self.get_object()
-        total_casos = paciente.casos_clinicos.count()
-        if total_casos > 0:
+        total_atenciones = paciente.atenciones_clinicas.count()
+        if total_atenciones > 0:
             return Response(
-                {'detail': f'No se puede eliminar el paciente porque tiene {total_casos} caso(s) clínico(s) asignado(s). Elimínalos primero.'},
+                {'detail': f'No se puede eliminar el paciente porque tiene {total_atenciones} atención(es) clínica(s). Elimínalas primero.'},
                 status=status.HTTP_409_CONFLICT
             )
         return super().destroy(request, *args, **kwargs)

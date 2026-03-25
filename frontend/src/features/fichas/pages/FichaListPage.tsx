@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { CasoClinico } from '../types';
 import { getCasosClinicos, deleteCasoClinico } from '../services/fichaService';
-import { Search, Plus, Eye, Trash2, Users, FileText, Pencil, BookOpen } from 'lucide-react';
+import { Search, Plus, Eye, Trash2, Pencil, BookOpen, Stethoscope } from 'lucide-react';
 import Pagination from '@/components/ui/Pagination';
 import Toast from '@/components/ui/Toast';
 import { useAuth } from '@/features/auth/context/AuthContext';
-import { formatRut } from '@/utils/rut';
 
 const FichaListPage = () => {
     const { user } = useAuth();
@@ -39,7 +38,7 @@ const FichaListPage = () => {
     const loadCasos = async () => {
         try {
             setLoading(true);
-            const data = await getCasosClinicos(currentPage, itemsPerPage, undefined, searchTerm || undefined);
+            const data = await getCasosClinicos(currentPage, itemsPerPage, searchTerm || undefined);
             setCasos(data.results);
             setTotalPages(Math.ceil(data.count / itemsPerPage));
             setTotalItems(data.count);
@@ -77,7 +76,7 @@ const FichaListPage = () => {
                     <div>
                         <h1 className="text-3xl font-arizona font-medium text-gray-900">Casos Clínicos</h1>
                         <p className="text-gray-500 mt-1 font-worksans">
-                            Gestiona los casos clínicos y revisa el avance de los estudiantes.
+                            Gestiona los casos clínicos y sus atenciones.
                         </p>
                     </div>
                     {isDocente && (
@@ -99,9 +98,9 @@ const FichaListPage = () => {
                             <p className="text-2xl font-arizona font-medium text-gray-900">{totalItems}</p>
                         </div>
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-                            <p className="text-sm text-gray-500 font-worksans">Estudiantes trabajando</p>
+                            <p className="text-sm text-gray-500 font-worksans">Total atenciones</p>
                             <p className="text-2xl font-arizona font-medium text-gray-900">
-                                {casos.reduce((acc, c) => acc + (c.total_estudiantes || 0), 0)}
+                                {casos.reduce((acc, c) => acc + (c.total_atenciones || 0), 0)}
                             </p>
                         </div>
                     </div>
@@ -132,11 +131,8 @@ const FichaListPage = () => {
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-worksans">
                                         Caso Clínico
                                     </th>
-                                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-worksans">
-                                        Paciente
-                                    </th>
                                     <th scope="col" className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider font-worksans">
-                                        Estudiantes
+                                        Atenciones
                                     </th>
                                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider font-worksans">
                                         Fecha
@@ -170,32 +166,15 @@ const FichaListPage = () => {
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                {caso.paciente_detail ? (
-                                                    <div>
-                                                        <Link
-                                                            to={`/pacientes/${caso.paciente_detail.id}`}
-                                                            className="text-sm font-medium text-gray-900 hover:text-aqua font-worksans"
-                                                        >
-                                                            {caso.paciente_detail.nombre} {caso.paciente_detail.apellido}
-                                                        </Link>
-                                                        <div className="text-xs text-gray-500 font-worksans">
-                                                            {formatRut(caso.paciente_detail.rut)}
-                                                        </div>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-sm text-gray-400 font-worksans">Paciente #{caso.paciente}</span>
-                                                )}
-                                            </td>
                                             <td className="px-6 py-4 whitespace-nowrap text-center">
-                                                {(caso.total_estudiantes || 0) > 0 ? (
+                                                {(caso.total_atenciones || 0) > 0 ? (
                                                     <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-50 text-green-700 text-sm font-worksans">
-                                                        <Users className="w-4 h-4" />
-                                                        {caso.total_estudiantes}
+                                                        <Stethoscope className="w-4 h-4" />
+                                                        {caso.total_atenciones}
                                                     </span>
                                                 ) : (
                                                     <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-50 text-gray-400 text-sm font-worksans">
-                                                        <Users className="w-4 h-4" />
+                                                        <Stethoscope className="w-4 h-4" />
                                                         0
                                                     </span>
                                                 )}
@@ -241,7 +220,7 @@ const FichaListPage = () => {
                                     ))
                                 ) : (
                                     <tr>
-                                        <td colSpan={5} className="px-6 py-12 text-center">
+                                        <td colSpan={4} className="px-6 py-12 text-center">
                                             {loading ? (
                                                 <div className="flex items-center justify-center">
                                                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-aqua"></div>
@@ -249,7 +228,7 @@ const FichaListPage = () => {
                                                 </div>
                                             ) : (
                                                 <div>
-                                                    <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                                                    <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
                                                     <p className="text-gray-500 font-worksans mb-1">No se encontraron casos clínicos.</p>
                                                     {isDocente && (
                                                         <Link

@@ -6,14 +6,14 @@ import {
 } from 'lucide-react';
 import { formatRut } from '@/utils/rut';
 import { Paciente } from '../types';
-import { CasoClinico } from '../../fichas/types';
+import { AtencionClinica } from '../../fichas/types';
 import { getPaciente } from '../services/pacienteService';
-import { getCasosClinicos } from '../../fichas/services/fichaService';
+import { getAtencionesClinicas } from '../../fichas/services/fichaService';
 
 const PacienteDetailPage = () => {
     const { id } = useParams<{ id: string }>();
     const [paciente, setPaciente] = useState<Paciente | null>(null);
-    const [casos, setCasos] = useState<CasoClinico[]>([]);
+    const [atenciones, setAtenciones] = useState<AtencionClinica[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -24,12 +24,12 @@ const PacienteDetailPage = () => {
 
     const loadData = async (pacienteId: number) => {
         try {
-            const [pacienteData, casosData] = await Promise.all([
+            const [pacienteData, atencionesData] = await Promise.all([
                 getPaciente(pacienteId),
-                getCasosClinicos(1, 1000, pacienteId)
+                getAtencionesClinicas(1, 1000, undefined, pacienteId)
             ]);
             setPaciente(pacienteData);
-            setCasos(casosData.results);
+            setAtenciones(atencionesData.results);
         } catch (error) {
             console.error('Error loading data', error);
         } finally {
@@ -120,44 +120,44 @@ const PacienteDetailPage = () => {
                     </div>
                 </div>
 
-                {/* Casos Clínicos Asignados */}
+                {/* Atenciones Clínicas */}
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-arizona font-medium text-gray-900 flex items-center gap-2">
                         <Activity className="w-6 h-6 text-aqua" />
-                        Casos Clínicos Asignados
+                        Atenciones Clínicas
                     </h2>
                 </div>
 
-                {casos.length === 0 ? (
+                {atenciones.length === 0 ? (
                     <div className="bg-white rounded-xl p-12 shadow-sm border border-gray-100 text-center">
                         <BookOpen className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500 font-worksans text-lg">No hay casos clínicos asignados a este paciente.</p>
+                        <p className="text-gray-500 font-worksans text-lg">No hay atenciones clínicas para este paciente.</p>
                         <p className="text-gray-400 font-worksans text-sm mt-2">
-                            Cree un caso clínico y asígnelo a este paciente.
+                            Cree una atención clínica desde un caso clínico.
                         </p>
                     </div>
                 ) : (
                     <div className="space-y-4">
-                        {casos.map((caso) => (
-                            <div key={caso.id} className="bg-white rounded-xl p-6 shadow-sm border-l-4 border-l-purple-500 border-gray-100 hover:shadow-md transition-shadow duration-200">
+                        {atenciones.map((atencion) => (
+                            <div key={atencion.id} className="bg-white rounded-xl p-6 shadow-sm border-l-4 border-l-purple-500 border-gray-100 hover:shadow-md transition-shadow duration-200">
                                 <div className="flex flex-col md:flex-row justify-between gap-4">
                                     <div className="flex-1">
                                         <div className="flex items-center gap-3 mb-2">
                                             <span className="px-2.5 py-0.5 rounded-full bg-purple-100 text-purple-700 text-xs font-bold font-worksans uppercase tracking-wide">
-                                                Caso Clínico
+                                                Atención
                                             </span>
                                             <span className="flex items-center text-sm text-gray-500 font-worksans">
                                                 <Clock className="w-4 h-4 mr-1" />
-                                                {new Date(caso.fecha_creacion).toLocaleDateString()}
+                                                {new Date(atencion.fecha_atencion).toLocaleDateString()}
                                             </span>
                                         </div>
                                         <h3 className="text-lg font-bold text-gray-900 font-arizona mb-1">
-                                            {caso.titulo}
+                                            {atencion.caso_clinico_detail?.titulo || 'Caso clínico'}
                                         </h3>
                                         <div className="flex items-center gap-4 mt-2">
                                             <span className="flex items-center text-sm text-gray-600 font-worksans">
                                                 <Users className="w-4 h-4 mr-1 text-green-600" />
-                                                {caso.total_estudiantes} estudiante{caso.total_estudiantes !== 1 ? 's' : ''}
+                                                {atencion.total_estudiantes} estudiante{atencion.total_estudiantes !== 1 ? 's' : ''}
                                             </span>
                                         </div>
                                     </div>
@@ -165,12 +165,12 @@ const PacienteDetailPage = () => {
                                     <div className="flex items-center gap-4 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6">
                                         <div className="text-right hidden md:block">
                                             <p className="text-xs text-gray-500 font-worksans">Creado por</p>
-                                            <p className="text-sm font-medium text-gray-900 font-worksans">{caso.creado_por_nombre}</p>
+                                            <p className="text-sm font-medium text-gray-900 font-worksans">{atencion.creado_por_nombre}</p>
                                         </div>
                                         <Link
-                                            to={`/casos-clinicos/${caso.id}`}
+                                            to={`/atenciones/${atencion.id}`}
                                             className="p-2 text-gray-400 hover:text-aqua hover:bg-aqua/5 rounded-full transition-colors"
-                                            title="Ver caso clínico"
+                                            title="Ver atención clínica"
                                         >
                                             <FileText className="w-6 h-6" />
                                         </Link>

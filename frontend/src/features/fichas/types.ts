@@ -24,15 +24,35 @@ export const CONTENIDO_DEFAULT: ContenidoClinico = {
 };
 
 // ──────────────────────────────────────────────
-// Caso Clínico (entidad principal)
+// Caso Clínico (escenario genérico, sin paciente)
 // ──────────────────────────────────────────────
 
 export interface CasoClinico {
     id: number;
     titulo: string;
     descripcion: string;
+
+    creado_por: number | null;
+    creado_por_nombre: string | null;
+    modificado_por: number | null;
+    modificado_por_nombre: string | null;
+    fecha_creacion: string;
+    fecha_modificacion: string;
+
+    total_atenciones: number;
+}
+
+// ──────────────────────────────────────────────
+// Atención Clínica (caso + paciente + fecha)
+// ──────────────────────────────────────────────
+
+export interface AtencionClinica {
+    id: number;
+    caso_clinico: number;
+    caso_clinico_detail: CasoClinico | null;
     paciente: number;
     paciente_detail: Paciente | null;
+    fecha_atencion: string;
 
     creado_por: number | null;
     creado_por_nombre: string | null;
@@ -45,39 +65,35 @@ export interface CasoClinico {
 }
 
 // ──────────────────────────────────────────────
-// Ficha de Estudiante
+// Atención Estudiante (asignación)
 // ──────────────────────────────────────────────
 
-export interface FichaEstudiante {
+export interface AtencionEstudiante {
     id: number;
-    caso_clinico: number;
-    caso_clinico_detail: CasoClinico | null;
+    atencion_clinica: number;
+    atencion_clinica_detail: AtencionClinica | null;
     estudiante: number | null;
     estudiante_nombre: string | null;
-
-    contenido: ContenidoClinico;
-
-    creado_por: number | null;
-    creado_por_nombre: string | null;
-    modificado_por: number | null;
-    modificado_por_nombre: string | null;
-    fecha_creacion: string;
-    fecha_modificacion: string;
-
-    total_versiones: number;
+    asignado_por: number | null;
+    asignado_por_nombre: string | null;
+    fecha_asignacion: string;
+    total_evoluciones: number;
 }
 
 // ──────────────────────────────────────────────
-// Historial de versiones
+// Evolución (nota clínica)
 // ──────────────────────────────────────────────
 
-export interface FichaHistorial {
+export type TipoAutor = 'ESTUDIANTE' | 'DOCENTE';
+
+export interface Evolucion {
     id: number;
-    ficha: number;
-    version: number;
-    autor: number | null;
-    autor_nombre: string | null;
-    rol_autor: string;
-    fecha: string;
+    atencion_estudiante: number;
+    numero: number;
     contenido: ContenidoClinico;
+    tipo_autor: TipoAutor;
+    nombre_autor: string;
+    creado_por: number | null;
+    creado_por_nombre: string | null;
+    fecha_creacion: string;
 }

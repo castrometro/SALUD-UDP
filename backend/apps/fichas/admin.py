@@ -1,26 +1,34 @@
 from django.contrib import admin
-from .models import CasoClinico, FichaEstudiante, FichaVersion
+from .models import CasoClinico, AtencionClinica, AtencionEstudiante, Evolucion
 
 
 @admin.register(CasoClinico)
 class CasoClinicoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'titulo', 'paciente', 'creado_por', 'fecha_creacion')
+    list_display = ('id', 'titulo', 'creado_por', 'fecha_creacion')
     list_filter = ('fecha_creacion', 'creado_por')
-    search_fields = ('titulo', 'descripcion', 'paciente__rut', 'paciente__nombre')
-    raw_id_fields = ('paciente', 'creado_por', 'modificado_por')
+    search_fields = ('titulo', 'descripcion')
+    raw_id_fields = ('creado_por', 'modificado_por')
 
 
-@admin.register(FichaEstudiante)
-class FichaEstudianteAdmin(admin.ModelAdmin):
-    list_display = ('id', 'caso_clinico', 'estudiante', 'fecha_creacion', 'modificado_por')
-    list_filter = ('fecha_creacion',)
-    search_fields = ('estudiante__email', 'caso_clinico__titulo')
-    raw_id_fields = ('caso_clinico', 'estudiante', 'creado_por', 'modificado_por')
+@admin.register(AtencionClinica)
+class AtencionClinicaAdmin(admin.ModelAdmin):
+    list_display = ('id', 'caso_clinico', 'paciente', 'fecha_atencion', 'creado_por', 'fecha_creacion')
+    list_filter = ('fecha_atencion', 'creado_por')
+    search_fields = ('caso_clinico__titulo', 'paciente__nombre', 'paciente__rut')
+    raw_id_fields = ('caso_clinico', 'paciente', 'creado_por', 'modificado_por')
 
 
-@admin.register(FichaVersion)
-class FichaVersionAdmin(admin.ModelAdmin):
-    list_display = ('id', 'ficha', 'version', 'autor', 'rol_autor', 'fecha')
-    list_filter = ('fecha', 'rol_autor', 'autor')
-    search_fields = ('ficha__id',)
-    raw_id_fields = ('ficha', 'autor')
+@admin.register(AtencionEstudiante)
+class AtencionEstudianteAdmin(admin.ModelAdmin):
+    list_display = ('id', 'atencion_clinica', 'estudiante', 'asignado_por', 'fecha_asignacion')
+    list_filter = ('fecha_asignacion',)
+    search_fields = ('estudiante__email', 'atencion_clinica__caso_clinico__titulo')
+    raw_id_fields = ('atencion_clinica', 'estudiante', 'asignado_por')
+
+
+@admin.register(Evolucion)
+class EvolucionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'atencion_estudiante', 'numero', 'tipo_autor', 'nombre_autor', 'fecha_creacion')
+    list_filter = ('tipo_autor', 'fecha_creacion')
+    search_fields = ('nombre_autor',)
+    raw_id_fields = ('atencion_estudiante', 'creado_por')

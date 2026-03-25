@@ -1,43 +1,43 @@
 import { useMemo, type FC } from 'react';
 import { Link } from 'react-router-dom';
 import { User, Calendar } from 'lucide-react';
-import { FichaEstudiante } from '../../fichas/types';
+import { AtencionEstudiante } from '../../fichas/types';
 import { formatRut } from '@/utils/rut';
 import { Paciente } from '../../pacientes/types';
 
 interface EstudianteCasosTabProps {
-    fichas: FichaEstudiante[];
+    fichas: AtencionEstudiante[];
 }
 
-interface Caso {
+interface CasoPaciente {
     paciente: Paciente;
     ultimaAtencion: string;
-    totalFichas: number;
+    totalAsignaciones: number;
 }
 
 const EstudianteCasosTab: FC<EstudianteCasosTabProps> = ({ fichas }) => {
 
     const casos = useMemo(() => {
-        const casosMap = new Map<number, Caso>();
+        const casosMap = new Map<number, CasoPaciente>();
 
-        fichas.forEach(ficha => {
-            const pacienteDetail = ficha.caso_clinico_detail?.paciente_detail;
+        fichas.forEach(asig => {
+            const pacienteDetail = asig.atencion_clinica_detail?.paciente_detail;
             if (!pacienteDetail) return;
 
             const current = casosMap.get(pacienteDetail.id);
-            const fechaFicha = ficha.fecha_creacion || '';
+            const fecha = asig.fecha_asignacion || '';
 
             if (current) {
                 casosMap.set(pacienteDetail.id, {
                     ...current,
-                    ultimaAtencion: fechaFicha > current.ultimaAtencion ? fechaFicha : current.ultimaAtencion,
-                    totalFichas: current.totalFichas + 1
+                    ultimaAtencion: fecha > current.ultimaAtencion ? fecha : current.ultimaAtencion,
+                    totalAsignaciones: current.totalAsignaciones + 1
                 });
             } else {
                 casosMap.set(pacienteDetail.id, {
                     paciente: pacienteDetail,
-                    ultimaAtencion: fechaFicha,
-                    totalFichas: 1
+                    ultimaAtencion: fecha,
+                    totalAsignaciones: 1
                 });
             }
         });
@@ -50,7 +50,7 @@ const EstudianteCasosTab: FC<EstudianteCasosTabProps> = ({ fichas }) => {
     if (casos.length === 0) {
         return (
             <div className="text-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-300">
-                <p className="text-gray-500 font-worksans">No se han registrado casos clínicos aún.</p>
+                <p className="text-gray-500 font-worksans">No se han registrado atenciones con pacientes aún.</p>
             </div>
         );
     }
@@ -78,11 +78,11 @@ const EstudianteCasosTab: FC<EstudianteCasosTabProps> = ({ fichas }) => {
                     <div className="mt-6 pt-4 border-t border-gray-50 space-y-3">
                         <div className="flex items-center text-sm text-gray-600 font-worksans">
                             <Calendar className="w-4 h-4 mr-2 text-gray-400" />
-                            <span>Última atención: {caso.ultimaAtencion ? new Date(caso.ultimaAtencion).toLocaleDateString() : 'N/A'}</span>
+                            <span>Última asignación: {caso.ultimaAtencion ? new Date(caso.ultimaAtencion).toLocaleDateString() : 'N/A'}</span>
                         </div>
                         <div className="flex items-center justify-between mt-4">
                             <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                {caso.totalFichas} {caso.totalFichas === 1 ? 'ficha' : 'fichas'}
+                                {caso.totalAsignaciones} {caso.totalAsignaciones === 1 ? 'asignación' : 'asignaciones'}
                             </span>
                             <Link
                                 to={`/pacientes/${caso.paciente.id}`}

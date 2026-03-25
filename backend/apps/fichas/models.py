@@ -17,13 +17,9 @@ CAMPOS_CLINICOS_DEFAULT = {
 
 
 class CasoClinico(models.Model):
-    """Escenario clínico creado por el docente. Entidad principal del módulo de fichas."""
+    """Escenario clínico genérico creado por el docente. Reutilizable con distintos pacientes."""
     titulo = models.CharField(max_length=255, help_text="Nombre descriptivo del caso clínico")
     descripcion = models.TextField(blank=True, default='', help_text="Narrativa completa del escenario clínico")
-    paciente = models.ForeignKey(
-        Paciente, on_delete=models.PROTECT,
-        related_name="casos_clinicos"
-    )
 
     # Trazabilidad
     creado_por = models.ForeignKey(
@@ -43,81 +39,126 @@ class CasoClinico(models.Model):
         ordering = ['-fecha_creacion']
 
     def __str__(self):
-        return f"Caso {self.id} - {self.titulo} → {self.paciente}"
+        return f"Caso {self.id} - {self.titulo}"
 
 
-class FichaEstudiante(models.Model):
-    """Copia de trabajo de un estudiante dentro de un caso clínico."""
+class AtencionClinica(models.Model):
+    """Sesión clínica: une un caso con un paciente en una fecha específica."""
     caso_clinico = models.ForeignKey(
         CasoClinico, on_delete=models.PROTECT,
-        related_name="fichas_estudiantes"
+        related_name="atenciones"
     )
-    estudiante = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, related_name="fichas_como_estudiante"
+    paciente = models.ForeignKey(
+        Paciente, on_delete=models.PROTECT,
+        related_name="atenciones"
     )
-    contenido = models.JSONField(
-        default=dict,
-        blank=True,
-        help_text="Campos clínicos de la ficha del estudiante"
+    fecha_atencion = models.DateField(
+        help_text="Fecha de la sesión clínica (visible para estudiantes)"
     )
 
     # Trazabilidad
     creado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, related_name="fichas_estudiante_creadas"
+        null=True, related_name="atenciones_creadas"
     )
     modificado_por = models.ForeignKey(
         settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
-        null=True, blank=True, related_name="fichas_estudiante_modificadas"
+        null=True, blank=True, related_name="atenciones_modificadas"
     )
     fecha_creacion = models.DateTimeField(auto_now_add=True)
     fecha_modificacion = models.DateTimeField(auto_now=True)
 
     class Meta:
-        verbose_name = "Ficha de Estudiante"
-        verbose_name_plural = "Fichas de Estudiantes"
-        ordering = ['-fecha_creacion']
+        verbose_name = "Atención Clínica"
+        verbose_name_plural = "Atenciones Clínicas"
+        ordering = ['-fecha_atencion']
         constraints = [
             models.UniqueConstraint(
-                fields=['caso_clinico', 'estudiante'],
-                name='unique_estudiante_por_caso',
+                fields=['caso_clinico', 'paciente', 'fecha_atencion'],
+                name='unique_caso_paciente_fecha'
+            )
+        ]
+
+    def __str__(self):
+        return f"Atención {self.id} - {self.caso_clinico.titulo} → {self.paciente} ({self.fecha_atencion})"
+
+
+class AtencionEstudiante(models.Model):
+    """Asignación de un estudiante a una atención clínica (hecha por el docente)."""
+    atencion_clinica = models.ForeignKey(
+        AtencionClinica, on_delete=models.PROTECT,
+        related_name="asignaciones"
+    )
+    estudiante = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, related_name="atenciones_como_estudiante"
+    )
+    asignado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, related_name="asignaciones_realizadas"
+    )
+    fecha_asignacion = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Asignación de Estudiante"
+        verbose_name_plural = "Asignaciones de Estudiantes"
+        ordering = ['-fecha_asignacion']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['atencion_clinica', 'estudiante'],
+                name='unique_estudiante_por_atencion',
                 condition=models.Q(estudiante__isnull=False)
             )
         ]
 
     def __str__(self):
-        return f"Ficha {self.id} - Caso {self.caso_clinico_id} (Est: {self.estudiante})"
+        return f"Asignación {self.id} - {self.estudiante} en Atención {self.atencion_clinica_id}"
 
 
-class FichaVersion(models.Model):
-    """Guarda el historial de versiones de cada ficha de estudiante"""
-    ficha = models.ForeignKey(FichaEstudiante, on_delete=models.CASCADE, related_name="versiones")
-    version = models.PositiveIntegerField()
-    autor = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True)
-    rol_autor = models.CharField(
-        max_length=20,
-        blank=True,
-        default='',
-        help_text="Rol con el que actuó el autor (ESTUDIANTE, DOCENTE, etc.)"
+class TipoAutor(models.TextChoices):
+    ESTUDIANTE = 'ESTUDIANTE', 'Estudiante'
+    DOCENTE = 'DOCENTE', 'Docente'
+
+
+class Evolucion(models.Model):
+    """Nota clínica en la cadena de evoluciones de una atención-estudiante."""
+    atencion_estudiante = models.ForeignKey(
+        AtencionEstudiante, on_delete=models.CASCADE,
+        related_name="evoluciones"
     )
-    fecha = models.DateTimeField(auto_now_add=True)
+    numero = models.PositiveIntegerField(
+        help_text="Número secuencial de la evolución dentro de esta asignación"
+    )
     contenido = models.JSONField(
         default=dict,
         blank=True,
-        help_text="Snapshot del contenido clínico en esta versión"
+        help_text="Campos clínicos de esta evolución"
     )
+    tipo_autor = models.CharField(
+        max_length=20,
+        choices=TipoAutor.choices,
+        help_text="Rol con el que se creó esta evolución"
+    )
+    nombre_autor = models.CharField(
+        max_length=255,
+        help_text="Nombre visible del autor (ej: 'Doctor Pérez' o nombre del estudiante)"
+    )
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, related_name="evoluciones_creadas"
+    )
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        verbose_name = "Versión de Ficha"
-        verbose_name_plural = "Versiones de Fichas"
-        ordering = ['-version']
+        verbose_name = "Evolución"
+        verbose_name_plural = "Evoluciones"
+        ordering = ['numero']
         constraints = [
             models.UniqueConstraint(
-                fields=['ficha', 'version'],
-                name='unique_version_por_ficha'
+                fields=['atencion_estudiante', 'numero'],
+                name='unique_numero_por_atencion_estudiante'
             )
         ]
 
     def __str__(self):
-        return f"Ficha {self.ficha_id} - Versión {self.version}"
+        return f"Evolución #{self.numero} - {self.nombre_autor} ({self.tipo_autor})"

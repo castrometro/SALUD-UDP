@@ -1,7 +1,6 @@
 import { useEffect, useState, type ChangeEvent, type FormEvent } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { createCasoClinico, getCasoClinico, updateCasoClinico } from '../services/fichaService';
-import PacienteSelect from '../components/PacienteSelect';
 import Toast from '@/components/ui/Toast';
 
 const FichaFormPage = () => {
@@ -12,11 +11,9 @@ const FichaFormPage = () => {
     const [formData, setFormData] = useState<{
         titulo: string;
         descripcion: string;
-        paciente: number | undefined;
     }>({
         titulo: '',
         descripcion: '',
-        paciente: undefined,
     });
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -32,7 +29,6 @@ const FichaFormPage = () => {
             setFormData({
                 titulo: data.titulo,
                 descripcion: data.descripcion || '',
-                paciente: data.paciente,
             });
         } catch (error) {
             console.error('Error loading caso clínico', error);
@@ -46,10 +42,6 @@ const FichaFormPage = () => {
 
     const handleSubmit = async (e: FormEvent) => {
         e.preventDefault();
-        if (!formData.paciente) {
-            setToast({ message: 'Debes seleccionar un paciente', type: 'error' });
-            return;
-        }
         try {
             if (isEdit && id) {
                 await updateCasoClinico(Number(id), {
@@ -62,7 +54,6 @@ const FichaFormPage = () => {
                 const nuevo = await createCasoClinico({
                     titulo: formData.titulo,
                     descripcion: formData.descripcion,
-                    paciente: formData.paciente,
                 });
                 setToast({ message: 'Caso clínico creado exitosamente', type: 'success' });
                 setTimeout(() => navigate(`/casos-clinicos/${nuevo.id}`), 1200);
@@ -84,8 +75,8 @@ const FichaFormPage = () => {
             {!isEdit && (
                 <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
                     <p className="text-purple-800 font-worksans text-sm">
-                        <strong>Caso Clínico:</strong> Define el título y descripción del caso.
-                        Los estudiantes crearán sus propias fichas con contenido clínico en blanco para completar.
+                        <strong>Caso Clínico:</strong> Define el título y descripción del escenario.
+                        Luego podrás crear atenciones clínicas asociando pacientes y asignando estudiantes.
                     </p>
                 </div>
             )}
@@ -122,21 +113,6 @@ const FichaFormPage = () => {
                     <p className="mt-1 text-xs text-gray-500 font-worksans">
                         Esta descripción será visible para los estudiantes como contexto del caso.
                     </p>
-                </div>
-
-                {/* Paciente */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Paciente</label>
-                    <PacienteSelect
-                        value={formData.paciente}
-                        onChange={(pacienteId) => setFormData(prev => ({ ...prev, paciente: pacienteId }))}
-                        disabled={isEdit}
-                    />
-                    {isEdit && (
-                        <p className="mt-1 text-xs text-gray-500 font-worksans">
-                            El paciente no se puede cambiar una vez creado el caso.
-                        </p>
-                    )}
                 </div>
 
                 <div className="flex justify-end">

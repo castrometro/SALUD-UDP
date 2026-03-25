@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Estudiante } from '../types';
 import { getEstudiante } from '../services/estudianteService';
-import { getFichasEstudiante } from '../../fichas/services/fichaService';
-import { FichaEstudiante } from '../../fichas/types';
+import { getAtencionesEstudiante } from '../../fichas/services/fichaService';
+import { AtencionEstudiante } from '../../fichas/types';
 import EstudianteFichasTab from '../components/EstudianteFichasTab';
 import EstudianteCasosTab from '../components/EstudianteCasosTab';
 import { ChevronLeft, Mail, CreditCard, User, AlertCircle, FileText, Users } from 'lucide-react';
@@ -12,7 +12,7 @@ import { formatRut } from '@/utils/rut';
 const EstudianteDetailPage = () => {
     const { id } = useParams<{ id: string }>();
     const [estudiante, setEstudiante] = useState<Estudiante | null>(null);
-    const [fichas, setFichas] = useState<FichaEstudiante[]>([]);
+    const [fichas, setFichas] = useState<AtencionEstudiante[]>([]);
     const [activeTab, setActiveTab] = useState<'fichas' | 'casos'>('fichas');
     const [loading, setLoading] = useState(true);
 
@@ -32,7 +32,7 @@ const EstudianteDetailPage = () => {
             // Ideally we shouldn't re-fetch estudiante on page change, but it's fine for now
             const [estudianteData, fichasData] = await Promise.all([
                 getEstudiante(estudianteId),
-                getFichasEstudiante(currentPage, 10, estudianteId)
+                getAtencionesEstudiante(currentPage, 10, estudianteId)
             ]);
             setEstudiante(estudianteData);
             setFichas(fichasData.results);
@@ -145,7 +145,7 @@ const EstudianteDetailPage = () => {
                                         }`}
                                 >
                                     <FileText className="w-5 h-5" />
-                                    Fichas Clínicas
+                                    Asignaciones
                                 </button>
                                 <button
                                     onClick={() => setActiveTab('casos')}
@@ -155,7 +155,7 @@ const EstudianteDetailPage = () => {
                                         }`}
                                 >
                                     <Users className="w-5 h-5" />
-                                    Casos (Pacientes)
+                                    Pacientes
                                 </button>
                             </nav>
                         </div>
