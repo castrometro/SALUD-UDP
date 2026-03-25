@@ -1,19 +1,19 @@
 # Documentación del Feature: Fichas (Frontend)
 
 ## Propósito
-Maneja la UI para plantillas clínicas, casos clínicos y fichas de estudiantes. Es el punto de interacción principal para docentes y estudiantes.
+Maneja la UI para casos clínicos y fichas de estudiantes. Es el punto de interacción principal para docentes y estudiantes.
 
 ## Estructura
 
 ```
 features/fichas/
-├── types.ts                    # Plantilla, CasoClinico, FichaEstudiante, FichaHistorial
+├── types.ts                    # CasoClinico, FichaEstudiante, FichaHistorial
 ├── services/
-│   └── fichaService.ts         # API calls para las 3 entidades + acciones custom
+│   └── fichaService.ts         # API calls para CasoClinico y FichaEstudiante + acciones custom
 ├── pages/
-│   ├── FichaListPage.tsx       # Lista de plantillas con búsqueda
-│   ├── FichaFormPage.tsx       # Formulario crear/editar plantilla
-│   ├── FichaDetailPage.tsx     # Detalle de plantilla con pestañas (la más compleja)
+│   ├── FichaListPage.tsx       # Lista de casos clínicos con búsqueda
+│   ├── FichaFormPage.tsx       # Formulario crear/editar caso clínico
+│   ├── FichaDetailPage.tsx     # Detalle de caso clínico con pestañas
 │   └── FichaEstudianteDetailPage.tsx  # Detalle de ficha de estudiante con historial
 └── components/
     └── PacienteSelect.tsx      # Autocomplete de pacientes
@@ -37,16 +37,11 @@ interface ContenidoClinico {
 }
 ```
 
-### `Plantilla`
-Caso clínico base creado por docentes:
-- `id`, `titulo`, `descripcion`, `contenido` (ContenidoClinico).
-- Trazabilidad: `creado_por`/`modificado_por` (IDs), `creado_por_nombre`/`modificado_por_nombre`, timestamps.
-- Agregados: `total_casos`, `total_estudiantes`.
-
 ### `CasoClinico`
-Vinculación plantilla + paciente:
-- `id`, `plantilla` (ID), `plantilla_titulo`, `paciente` (ID), `paciente_detail` (Paciente | null).
-- Trazabilidad: `creado_por`, `creado_por_nombre`, `fecha_creacion`.
+Entidad central creada por docentes:
+- `id`, `titulo`, `descripcion` (texto narrativo del escenario clínico).
+- `paciente` (ID), `paciente_detail` (Paciente | null).
+- Trazabilidad: `creado_por`/`modificado_por` (IDs), `creado_por_nombre`/`modificado_por_nombre`, timestamps.
 - Agregado: `total_estudiantes`.
 
 ### `FichaEstudiante`
@@ -63,21 +58,13 @@ Snapshot de versión:
 
 ## Servicio (`fichaService.ts`)
 
-### Plantillas
-| Función | Método | Endpoint |
-|---------|--------|----------|
-| `getPlantillas(page, pageSize)` | GET | `/fichas/plantillas/?page=&page_size=` |
-| `getPlantilla(id)` | GET | `/fichas/plantillas/{id}/` |
-| `createPlantilla(data)` | POST | `/fichas/plantillas/` |
-| `updatePlantilla(id, data)` | PATCH | `/fichas/plantillas/{id}/` |
-| `deletePlantilla(id)` | DELETE | `/fichas/plantillas/{id}/` |
-
 ### Casos Clínicos
 | Función | Método | Endpoint |
 |---------|--------|----------|
-| `getCasosClinicos(page, pageSize, plantillaId?, pacienteId?)` | GET | `/fichas/casos-clinicos/?...` |
+| `getCasosClinicos(page, pageSize, pacienteId?, search?)` | GET | `/fichas/casos-clinicos/?...` |
 | `getCasoClinico(id)` | GET | `/fichas/casos-clinicos/{id}/` |
-| `createCasoClinico({plantilla, paciente})` | POST | `/fichas/casos-clinicos/` |
+| `createCasoClinico({titulo, descripcion, paciente})` | POST | `/fichas/casos-clinicos/` |
+| `updateCasoClinico(id, data)` | PATCH | `/fichas/casos-clinicos/{id}/` |
 | `deleteCasoClinico(id)` | DELETE | `/fichas/casos-clinicos/{id}/` |
 | `getFichasEstudiantesDeCaso(casoId, page, pageSize)` | GET | `/fichas/casos-clinicos/{id}/fichas_estudiantes/` |
 
@@ -95,43 +82,37 @@ Snapshot de versión:
 ## Páginas
 
 ### `FichaListPage.tsx`
-Lista de plantillas con búsqueda y paginación.
-- **Estado**: `plantillas[]`, `searchTerm`, `currentPage`, `totalPages`, `totalItems`, `toast`.
-- Búsqueda con debounce 500ms, reseteando a página 1.
-- Tabla con columnas: Plantilla (título+descripción), Casos, Estudiantes, Fecha/Autor.
-- Tarjetas de resumen: total plantillas, casos, estudiantes.
-- **Acciones**: Ver detalle (link), Editar, Eliminar (con `window.confirm`).
-- **Eliminación**: Muestra Toast con mensaje del backend (409 si tiene casos asociados).
+Lista de casos clínicos con búsqueda server-side y paginación.
+- **Estado**: `casos[]`, `searchTerm`, `currentPage`, `totalPages`, `totalItems`, `toast`.
+- Búsqueda server-side con `?search=` (titulo y descripcion), reseteando a página 1.
+- Tabla con columnas: Caso Clínico (título+descripción), Paciente, Estudiantes, Fecha.
+- **Acciones** (solo docentes): Ver detalle (link), Editar, Eliminar.
+- **Eliminación**: Muestra Toast con mensaje del backend (409 si tiene fichas asociadas).
 
 ### `FichaFormPage.tsx`
-Formulario para crear/editar plantillas.
-- **Estado**: `formData` (titulo, descripcion, contenido), `isEdit`, `toast`.
-- Carga plantilla si edita (por ID en URL).
-- Campos de metadatos: título (input), descripción (textarea).
-- 8 campos clínicos como textareas (leen/escriben en `formData.contenido`).
+Formulario para crear/editar casos clínicos.
+- **Estado**: `formData` (titulo, descripcion, paciente), `isEdit`, `toast`.
+- Carga caso clínico si edita (por ID en URL).
+- Campos: título (input), descripción narrativa (textarea grande, 8 rows), paciente (PacienteSelect, deshabilitado en edición).
 - Muestra Toast de éxito tras guardar.
-- Caja informativa explicando el flujo Plantilla → Casos → Fichas.
 
 ### `FichaDetailPage.tsx`
-La página más compleja. Detalle de una plantilla con 3 pestañas.
+Detalle de un caso clínico con 2 pestañas.
 
-1. **Contenido Clínico**: Muestra los 8 campos desde `plantilla.contenido` en formato solo lectura.
-2. **Casos Clínicos**: Lista de CasosClinicos asociados.
-   - Componente `PacienteSelect` para seleccionar paciente.
-   - Botón para crear nuevo CasoClinico (vincula plantilla+paciente).
-   - Cada caso muestra: paciente, fecha, total estudiantes, botón eliminar.
-   - Toast de error si constraint de unicidad o si caso tiene fichas.
-3. **Fichas de Estudiantes**: Lista paginada de FichasEstudiantes a través de todos los casos.
+1. **Descripción del Caso**: Muestra la descripción narrativa en formato solo lectura.
+2. **Fichas de Estudiantes**: Lista de FichasEstudiantes del caso.
+   - Cada ficha muestra: nombre estudiante, estado, fecha.
+   - Para estudiantes: botón "Crear mi ficha" o link "Ver mi ficha".
 
-**Header**: Título, contadores (total casos, total estudiantes).
-**Acciones** (solo docentes): Editar plantilla, Eliminar plantilla (con modal de confirmación).
-**Carga lazy**: Las pestañas cargan datos solo al activarse.
-**Toast**: Éxito/error para todas las operaciones (crear caso, eliminar caso, eliminar plantilla).
+**Header**: Título del caso, info del paciente con link.
+**Acciones** (solo docentes): Editar caso, Eliminar caso (con modal de confirmación).
+**Toast**: Éxito/error para todas las operaciones.
 
 ### `FichaEstudianteDetailPage.tsx`
 Detalle de la ficha de un estudiante con edición y historial.
 
 - **Estado**: `ficha`, `editableFicha`, `caso`, `isEditing`, `activeTab`, `historial`, `selectedVersion`, `toast`.
+- **Sección colapsable**: Descripción del caso clínico como referencia.
 - **2 pestañas**:
   1. **Caso Clínico**: Info del paciente (nombre, RUT), datos de trazabilidad.
      - 8 campos clínicos editables (textareas).
@@ -140,7 +121,7 @@ Detalle de la ficha de un estudiante con edición y historial.
   2. **Historial**: Lista de versiones con número, autor, fecha, `rol_autor`.
      - Click en versión para ver snapshot (viaje en el tiempo).
      - Botón "Ver versión actual" para volver.
-- **Eliminación**: Solo docentes. Muestra mensaje de error del backend.
+- **Eliminación**: Solo docentes.
 
 ## Componentes
 

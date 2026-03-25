@@ -1,6 +1,8 @@
 # Rediseño Conceptual: Caso Clínico como entidad central
 
-## Problema actual
+> **Estado: IMPLEMENTADO** — Este rediseño fue aplicado en la rama `feature/rediseno-caso-clinico-eliminar-plantilla` y mergeado a `main`. El modelo `Plantilla` ya no existe. `CasoClinico` es la entidad central.
+
+## Problema original
 
 Los nombres de los modelos confunden tres conceptos distintos del dominio clínico:
 

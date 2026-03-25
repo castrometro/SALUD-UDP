@@ -51,11 +51,11 @@ features/pacientes/
 - Grid de información: Fecha Nacimiento (con edad), Correo, Teléfono, Domicilio.
 - Botón para editar paciente.
 - **Casos Clínicos Asignados**: Lista de CasosClinicos del paciente.
-  - Cada caso muestra: título de plantilla, fecha de creación, total de estudiantes, creado por, enlace a la plantilla.
+  - Cada caso muestra: título del caso clínico, fecha de creación, total de estudiantes, creado por, enlace al caso.
   - Estado vacío si no tiene casos.
 - Carga en paralelo: paciente y casos clínicos en mount.
 
 ## Flujo principal
 1. Docente busca paciente en lista.
 2. Entra al detalle del paciente.
-3. Desde la plantilla, crea un CasoClinico vinculando plantilla + paciente.
+3. Crea un caso clínico desde `/casos-clinicos/nuevo` asociándolo al paciente.

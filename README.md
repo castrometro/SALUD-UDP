@@ -32,7 +32,7 @@ Vite actúa como punto de entrada único en desarrollo, usando su proxy integrad
 |-----|----------------|
 | `apps/users` | Usuarios, autenticación JWT, roles |
 | `apps/pacientes` | Gestión de pacientes, validación RUT |
-| `apps/fichas` | Fichas clínicas: Plantillas, Casos Clínicos, Fichas de Estudiantes, historial de versiones |
+| `apps/fichas` | Fichas clínicas: Casos Clínicos (entidad central), Fichas de Estudiantes, historial de versiones |
 | `apps/common` | Validadores compartidos (RUT chileno) |
 
 ### Frontend por Features (React)
@@ -40,7 +40,7 @@ Vite actúa como punto de entrada único en desarrollo, usando su proxy integrad
 |---------|----------------|
 | `features/auth` | Login, contexto de autenticación, protección de rutas |
 | `features/pacientes` | CRUD de pacientes, detalle con fichas asociadas |
-| `features/fichas` | Plantillas, fichas de estudiante, historial de versiones |
+| `features/fichas` | Casos clínicos, fichas de estudiante, historial de versiones |
 | `features/estudiantes` | Gestión de estudiantes (vista docente/admin) |
 
 ## Stack Tecnológico
@@ -181,5 +181,5 @@ El archivo `.env.example` contiene todos los valores necesarios para desarrollo.
 | Rol | Puede |
 |-----|-------|
 | **ADMIN** | Todo. Acceso a Django Admin. |
-| **DOCENTE** | Crear pacientes, crear plantillas clínicas, crear casos clínicos (vincular plantilla+paciente), ver/editar fichas de estudiantes, ver historial. |
+| **DOCENTE** | Crear pacientes, crear casos clínicos (con título, descripción y paciente asociado), ver/editar fichas de estudiantes, ver historial. |
 | **ESTUDIANTE** | Ver pacientes, crear su ficha en un caso clínico, editar sus fichas, ver historial. |

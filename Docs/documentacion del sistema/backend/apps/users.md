@@ -22,8 +22,8 @@ Reemplaza el modelo de usuario por defecto. Usa `email` como identificador princ
 
 ### Roles (`User.Role`)
 - **ADMIN**: Acceso total al sistema y Django Admin.
-- **DOCENTE**: Crea pacientes, crea plantillas (fichas base), revisa trabajo de estudiantes.
-- **ESTUDIANTE**: Clona plantillas, edita sus propias fichas.
+- **DOCENTE**: Crea pacientes, crea casos clínicos (fichas base con descripción del escenario), revisa trabajo de estudiantes.
+- **ESTUDIANTE**: Accede a casos clínicos, crea sus fichas (vacías), edita sus propias fichas.
 
 ### `CustomUserManager`
 Manager personalizado con `create_user()` y `create_superuser()`. Normaliza email y valida campos de staff/superuser.
