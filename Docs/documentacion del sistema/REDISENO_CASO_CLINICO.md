@@ -1,6 +1,8 @@
 # Rediseño Conceptual: Caso Clínico como entidad central
 
-> **Estado: IMPLEMENTADO** — Este rediseño fue aplicado en la rama `feature/rediseno-caso-clinico-eliminar-plantilla` y mergeado a `main`. El modelo `Plantilla` ya no existe. `CasoClinico` es la entidad central.
+> **Estado: SUPERADO** — Este documento describe el primer rediseño (eliminar `Plantilla`, hacer `CasoClinico` central). Fue implementado y mergeado a `main`. Posteriormente se hizo un **segundo rediseño** (rama `feature/rediseno-atencion-clinica`) que reemplazó `FichaEstudiante`/`FichaVersion` por `AtencionClinica`/`AtencionEstudiante`/`Evolucion`.
+>
+> **Arquitectura actual**: `CasoClinico` → `AtencionClinica` → `AtencionEstudiante` → `Evolucion`. Ver `workflows.md` y `backend/apps/fichas.md` para documentación actualizada.
 
 ## Problema original
 

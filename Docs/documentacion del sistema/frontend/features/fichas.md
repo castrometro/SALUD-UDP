@@ -1,20 +1,23 @@
 # Documentación del Feature: Fichas (Frontend)
 
 ## Propósito
-Maneja la UI para casos clínicos y fichas de estudiantes. Es el punto de interacción principal para docentes y estudiantes.
+Maneja la UI para casos clínicos, atenciones clínicas, asignaciones de estudiantes y evoluciones. Es el punto de interacción principal para docentes y estudiantes.
 
 ## Estructura
 
 ```
 features/fichas/
-├── types.ts                    # CasoClinico, FichaEstudiante, FichaHistorial
+├── types.ts                    # CasoClinico, AtencionClinica, AtencionEstudiante, Evolucion
 ├── services/
-│   └── fichaService.ts         # API calls para CasoClinico y FichaEstudiante + acciones custom
+│   └── fichaService.ts         # API calls para los 4 modelos + acciones custom
 ├── pages/
 │   ├── FichaListPage.tsx       # Lista de casos clínicos con búsqueda
 │   ├── FichaFormPage.tsx       # Formulario crear/editar caso clínico
-│   ├── FichaDetailPage.tsx     # Detalle de caso clínico con pestañas
-│   └── FichaEstudianteDetailPage.tsx  # Detalle de ficha de estudiante con historial
+│   ├── FichaDetailPage.tsx     # Detalle de caso clínico con atenciones
+│   ├── AtencionFormPage.tsx    # Crear atención (paciente + fecha)
+│   ├── AtencionDetailPage.tsx  # Detalle de atención (estudiantes, evoluciones)
+│   ├── EvolucionPage.tsx       # Ver/editar evolución con 8 campos clínicos
+│   └── FichaEstudianteDetailPage.tsx  # (deprecated) Redirect a /casos-clinicos
 └── components/
     └── PacienteSelect.tsx      # Autocomplete de pacientes
 ```
@@ -38,46 +41,70 @@ interface ContenidoClinico {
 ```
 
 ### `CasoClinico`
-Entidad central creada por docentes:
-- `id`, `titulo`, `descripcion` (texto narrativo del escenario clínico).
-- `paciente` (ID), `paciente_detail` (Paciente | null).
+Escenario genérico reutilizable (sin paciente):
+- `id`, `titulo`, `descripcion`.
 - Trazabilidad: `creado_por`/`modificado_por` (IDs), `creado_por_nombre`/`modificado_por_nombre`, timestamps.
+- Agregado: `total_atenciones`.
+
+### `AtencionClinica`
+Sesión clínica (caso + paciente + fecha):
+- `id`, `caso_clinico` (ID), `caso_clinico_detail` (CasoClinico | null).
+- `paciente` (ID), `paciente_detail` (Paciente | null).
+- `fecha_atencion` (string ISO date).
+- Trazabilidad: `creado_por`/`modificado_por` + nombres, timestamps.
 - Agregado: `total_estudiantes`.
 
-### `FichaEstudiante`
-Ficha individual del estudiante:
-- `id`, `caso_clinico` (ID), `caso_clinico_detail` (CasoClinico | null), `estudiante` (ID | null), `estudiante_nombre`.
-- `contenido` (ContenidoClinico).
-- Trazabilidad: `creado_por`/`modificado_por` + nombres, timestamps.
-- Agregado: `total_versiones`.
+### `AtencionEstudiante`
+Asignación de estudiante a atención:
+- `id`, `atencion_clinica` (ID), `atencion_clinica_detail` (AtencionClinica | null).
+- `estudiante` (ID | null), `estudiante_nombre`.
+- `asignado_por` (ID | null), `asignado_por_nombre`.
+- `fecha_asignacion`, `total_evoluciones`.
 
-### `FichaHistorial`
-Snapshot de versión:
-- `id`, `ficha` (ID), `version`, `autor` (ID | null), `autor_nombre`, `rol_autor`, `fecha`.
+### `Evolucion`
+Nota clínica en cadena:
+- `id`, `atencion_estudiante` (ID), `numero`.
 - `contenido` (ContenidoClinico).
+- `tipo_autor` (TipoAutor: 'ESTUDIANTE' | 'DOCENTE'), `nombre_autor`.
+- Trazabilidad: `creado_por`/`creado_por_nombre`, `fecha_creacion`.
 
 ## Servicio (`fichaService.ts`)
 
 ### Casos Clínicos
 | Función | Método | Endpoint |
 |---------|--------|----------|
-| `getCasosClinicos(page, pageSize, pacienteId?, search?)` | GET | `/fichas/casos-clinicos/?...` |
+| `getCasosClinicos(page, pageSize, search?)` | GET | `/fichas/casos-clinicos/?...` |
 | `getCasoClinico(id)` | GET | `/fichas/casos-clinicos/{id}/` |
-| `createCasoClinico({titulo, descripcion, paciente})` | POST | `/fichas/casos-clinicos/` |
+| `createCasoClinico({titulo, descripcion})` | POST | `/fichas/casos-clinicos/` |
 | `updateCasoClinico(id, data)` | PATCH | `/fichas/casos-clinicos/{id}/` |
 | `deleteCasoClinico(id)` | DELETE | `/fichas/casos-clinicos/{id}/` |
-| `getFichasEstudiantesDeCaso(casoId, page, pageSize)` | GET | `/fichas/casos-clinicos/{id}/fichas_estudiantes/` |
+| `getAtencionesDeCaso(casoId, page, pageSize)` | GET | `/fichas/casos-clinicos/{id}/atenciones/` |
 
-### Fichas de Estudiantes
+### Atenciones Clínicas
 | Función | Método | Endpoint |
 |---------|--------|----------|
-| `getFichasEstudiante(page, pageSize, estudianteId?)` | GET | `/fichas/fichas-estudiantes/?...` |
-| `getFichaEstudiante(id)` | GET | `/fichas/fichas-estudiantes/{id}/` |
-| `updateFichaEstudiante(id, data)` | PATCH | `/fichas/fichas-estudiantes/{id}/` |
-| `deleteFichaEstudiante(id)` | DELETE | `/fichas/fichas-estudiantes/{id}/` |
-| `crearMiFicha(casoClinicoId)` | POST | `/fichas/fichas-estudiantes/crear_mi_ficha/` |
-| `getMiFicha(casoClinicoId)` | GET | `/fichas/fichas-estudiantes/mi_ficha/?caso_clinico={id}` |
-| `getFichaHistorial(fichaId)` | GET | `/fichas/fichas-estudiantes/{id}/historial/` |
+| `getAtencionesClinicas(page, pageSize, casoId?, pacienteId?)` | GET | `/fichas/atenciones-clinicas/?...` |
+| `getAtencionClinica(id)` | GET | `/fichas/atenciones-clinicas/{id}/` |
+| `createAtencionClinica({caso_clinico, paciente, fecha_atencion})` | POST | `/fichas/atenciones-clinicas/` |
+| `updateAtencionClinica(id, data)` | PATCH | `/fichas/atenciones-clinicas/{id}/` |
+| `deleteAtencionClinica(id)` | DELETE | `/fichas/atenciones-clinicas/{id}/` |
+| `asignarEstudiante(atencionId, estudianteId)` | POST | `/fichas/atenciones-clinicas/{id}/asignar_estudiante/` |
+| `getEstudiantesDeAtencion(atencionId)` | GET | `/fichas/atenciones-clinicas/{id}/estudiantes/` |
+
+### Atenciones Estudiante
+| Función | Método | Endpoint |
+|---------|--------|----------|
+| `getAtencionesEstudiante(page, pageSize, estudianteId?, atencionClinicaId?)` | GET | `/fichas/atenciones-estudiantes/?...` |
+| `getAtencionEstudiante(id)` | GET | `/fichas/atenciones-estudiantes/{id}/` |
+| `crearEvolucion(asignacionId, {contenido, tipo_autor, nombre_autor})` | POST | `/fichas/atenciones-estudiantes/{id}/crear_evolucion/` |
+| `getEvolucionesDeAsignacion(asignacionId)` | GET | `/fichas/atenciones-estudiantes/{id}/evoluciones/` |
+
+### Evoluciones
+| Función | Método | Endpoint |
+|---------|--------|----------|
+| `getEvoluciones(page, pageSize, atencionEstudianteId?)` | GET | `/fichas/evoluciones/?...` |
+| `getEvolucion(id)` | GET | `/fichas/evoluciones/{id}/` |
+| `updateEvolucion(id, {contenido})` | PATCH | `/fichas/evoluciones/{id}/` |
 
 ## Páginas
 
@@ -85,43 +112,46 @@ Snapshot de versión:
 Lista de casos clínicos con búsqueda server-side y paginación.
 - **Estado**: `casos[]`, `searchTerm`, `currentPage`, `totalPages`, `totalItems`, `toast`.
 - Búsqueda server-side con `?search=` (titulo y descripcion), reseteando a página 1.
-- Tabla con columnas: Caso Clínico (título+descripción), Paciente, Estudiantes, Fecha.
+- Tabla con columnas: Caso Clínico (título+descripción), Atenciones, Fecha.
 - **Acciones** (solo docentes): Ver detalle (link), Editar, Eliminar.
-- **Eliminación**: Muestra Toast con mensaje del backend (409 si tiene fichas asociadas).
+- **Eliminación**: Muestra Toast con mensaje del backend (409 si tiene atenciones asociadas).
 
 ### `FichaFormPage.tsx`
 Formulario para crear/editar casos clínicos.
-- **Estado**: `formData` (titulo, descripcion, paciente), `isEdit`, `toast`.
+- **Estado**: `formData` (titulo, descripcion), `isEdit`, `toast`.
 - Carga caso clínico si edita (por ID en URL).
-- Campos: título (input), descripción narrativa (textarea grande, 8 rows), paciente (PacienteSelect, deshabilitado en edición).
-- Muestra Toast de éxito tras guardar.
+- Campos: título (input), descripción narrativa (textarea grande).
+- **No incluye selector de paciente** — el paciente se asigna al crear una atención.
 
 ### `FichaDetailPage.tsx`
-Detalle de un caso clínico con 2 pestañas.
+Detalle de un caso clínico con atenciones clínicas.
+- Muestra título, descripción, atenciones clínicas paginadas.
+- Cada atención muestra: paciente, fecha, cantidad de estudiantes.
+- **Acciones** (solo docentes): Editar caso, Eliminar caso, Nueva Atención.
 
-1. **Descripción del Caso**: Muestra la descripción narrativa en formato solo lectura.
-2. **Fichas de Estudiantes**: Lista de FichasEstudiantes del caso.
-   - Cada ficha muestra: nombre estudiante, estado, fecha.
-   - Para estudiantes: botón "Crear mi ficha" o link "Ver mi ficha".
+### `AtencionFormPage.tsx`
+Crear una atención clínica dentro de un caso.
+- **Route param**: `casoId` desde `/casos-clinicos/:casoId/nueva-atencion`.
+- Campos: `PacienteSelect` + fecha de atención (date picker).
+- Al guardar, navega a `/atenciones/${atencion.id}`.
 
-**Header**: Título del caso, info del paciente con link.
-**Acciones** (solo docentes): Editar caso, Eliminar caso (con modal de confirmación).
-**Toast**: Éxito/error para todas las operaciones.
+### `AtencionDetailPage.tsx`
+Detalle de una atención clínica con estudiantes y evoluciones.
+- Muestra info del caso, paciente, fecha.
+- Lista de estudiantes asignados en grid.
+- Modal para asignar nuevo estudiante (por ID).
+- Al seleccionar un estudiante, muestra sus evoluciones.
+- Docentes pueden crear evoluciones como "Doctor" (con `nombre_autor` personalizable).
 
-### `FichaEstudianteDetailPage.tsx`
-Detalle de la ficha de un estudiante con edición y historial.
+### `EvolucionPage.tsx`
+Ver/editar una evolución individual con los 8 campos clínicos.
+- **Route param**: `id` desde `/evoluciones/:id`.
+- Muestra los 8 campos clínicos en textareas.
+- Toggle editar/ver con permisos (dueño o docente).
+- Guarda via `PATCH /fichas/evoluciones/{id}/`.
 
-- **Estado**: `ficha`, `editableFicha`, `caso`, `isEditing`, `activeTab`, `historial`, `selectedVersion`, `toast`.
-- **Sección colapsable**: Descripción del caso clínico como referencia.
-- **2 pestañas**:
-  1. **Caso Clínico**: Info del paciente (nombre, RUT), datos de trazabilidad.
-     - 8 campos clínicos editables (textareas).
-     - Botones: Editar / Guardar / Descartar (solo dueño o docente).
-     - Banner de advertencia al ver versión histórica.
-  2. **Historial**: Lista de versiones con número, autor, fecha, `rol_autor`.
-     - Click en versión para ver snapshot (viaje en el tiempo).
-     - Botón "Ver versión actual" para volver.
-- **Eliminación**: Solo docentes.
+### `FichaEstudianteDetailPage.tsx` (deprecated)
+Redirecciona a `/casos-clinicos` via `<Navigate>`.
 
 ## Componentes
 
