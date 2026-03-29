@@ -17,7 +17,7 @@ features/pacientes/
 ```
 
 ## Tipos (`types.ts`)
-- `Paciente`: id, rut, nombre, apellido, prevision, correo, numero_telefono, fecha_nacimiento, domicilio, edad (calculado server-side), created_at/updated_at.
+- `Paciente`: id, rut, nombre, apellido, prevision, correo, numero_telefono, fecha_nacimiento, sexo, domicilio, antecedentes_personales, medicamentos_habituales, alergias, edad (calculado server-side), created_at/updated_at.
 
 ## Servicio (`pacienteService.ts`)
 
@@ -44,11 +44,14 @@ features/pacientes/
 - Validación de RUT chileno en frontend (`validateRut()`, `formatRut()`).
 - RUT deshabilitado en modo edición.
 - Dropdown de previsión (FONASA, ISAPRE, PARTICULAR).
-- Campos: RUT, Fecha Nacimiento, Nombre, Apellido, Previsión, Teléfono, Correo, Domicilio.
+- Dropdown de sexo (Masculino, Femenino, Otro, No informa).
+- Campos: RUT, Fecha Nacimiento, Nombre, Apellido, Previsión, Sexo, Teléfono, Correo, Domicilio.
+- Sección "Perfil Clínico" con textareas para: Antecedentes Personales, Medicamentos Habituales, Alergias.
 
 ### `PacienteDetailPage.tsx`
-- Tarjeta de perfil: Avatar (iniciales), nombre, RUT formateado, badge de previsión.
+- Tarjeta de perfil: Avatar (iniciales), nombre, RUT formateado, badge de previsión, badge de sexo (si distinto de NO_INFORMA).
 - Grid de información: Fecha Nacimiento (con edad), Correo, Teléfono, Domicilio.
+- Sección "Perfil Clínico" (condicional, visible solo si hay datos): grid de 3 columnas con antecedentes, medicamentos y alergias.
 - Botón para editar paciente.
 - **Casos Clínicos Asignados**: Lista de CasosClinicos del paciente.
   - Cada caso muestra: título del caso clínico, fecha de creación, total de estudiantes, creado por, enlace al caso.

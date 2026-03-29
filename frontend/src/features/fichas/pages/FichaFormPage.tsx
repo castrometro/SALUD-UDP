@@ -10,9 +10,11 @@ const FichaFormPage = () => {
 
     const [formData, setFormData] = useState<{
         titulo: string;
+        tema: string;
         descripcion: string;
     }>({
         titulo: '',
+        tema: '',
         descripcion: '',
     });
     const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
@@ -28,6 +30,7 @@ const FichaFormPage = () => {
             const data = await getCasoClinico(casoId);
             setFormData({
                 titulo: data.titulo,
+                tema: data.tema || '',
                 descripcion: data.descripcion || '',
             });
         } catch (error) {
@@ -46,6 +49,7 @@ const FichaFormPage = () => {
             if (isEdit && id) {
                 await updateCasoClinico(Number(id), {
                     titulo: formData.titulo,
+                    tema: formData.tema,
                     descripcion: formData.descripcion,
                 });
                 setToast({ message: 'Caso clínico actualizado exitosamente', type: 'success' });
@@ -53,6 +57,7 @@ const FichaFormPage = () => {
             } else {
                 const nuevo = await createCasoClinico({
                     titulo: formData.titulo,
+                    tema: formData.tema,
                     descripcion: formData.descripcion,
                 });
                 setToast({ message: 'Caso clínico creado exitosamente', type: 'success' });
@@ -96,6 +101,23 @@ const FichaFormPage = () => {
                         className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
                         placeholder="Ej: Caso de hipertensión arterial"
                     />
+                </div>
+
+                {/* Tema */}
+                <div>
+                    <label htmlFor="tema" className="block text-sm font-medium text-gray-700">Tema / Unidad Curricular</label>
+                    <input
+                        type="text"
+                        name="tema"
+                        id="tema"
+                        value={formData.tema}
+                        onChange={handleChange}
+                        className="mt-1 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500"
+                        placeholder="Ej: Cardiología, Endocrinología, Urgencias..."
+                    />
+                    <p className="mt-1 text-xs text-gray-500 font-worksans">
+                        Opcional. Permite agrupar los casos por unidad temática.
+                    </p>
                 </div>
 
                 {/* Descripción */}

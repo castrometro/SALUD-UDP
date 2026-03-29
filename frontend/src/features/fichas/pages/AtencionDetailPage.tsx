@@ -1,11 +1,11 @@
 import { useState, useEffect, type FormEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, AlertCircle, Users, Plus, Stethoscope, FileText } from 'lucide-react';
-import { AtencionClinica, AtencionEstudiante, Evolucion } from '../types';
+import { ChevronLeft, AlertCircle, Users, Plus, Stethoscope, FileText, MessageSquare } from 'lucide-react';
+import { AtencionClinica, AtencionEstudiante, Evolucion, Vineta } from '../types';
 import {
     getAtencionClinica, asignarEstudiante,
     getEstudiantesDeAtencion, getEvolucionesDeAsignacion,
-    crearEvolucion
+    crearEvolucion, crearVineta, getVinetasDeAsignacion
 } from '../services/fichaService';
 import { useAuth } from '../../auth/context/AuthContext';
 import { formatRut } from '@/utils/rut';
@@ -30,7 +30,12 @@ const AtencionDetailPage = () => {
     // Evoluciones de la asignación seleccionada
     const [selectedAsignacion, setSelectedAsignacion] = useState<AtencionEstudiante | null>(null);
     const [evoluciones, setEvoluciones] = useState<Evolucion[]>([]);
+    const [vinetas, setVinetas] = useState<Vineta[]>([]);
     const [evolucionesLoading, setEvolucionesLoading] = useState(false);
+
+    // Crear viñeta
+    const [showVinetaForm, setShowVinetaForm] = useState(false);
+    const [vinetaContenido, setVinetaContenido] = useState('');
 
     const isDocente = user?.role === 'ADMIN' || user?.role === 'DOCENTE';
     const isEstudiante = user?.role === 'ESTUDIANTE';
@@ -93,10 +98,14 @@ const AtencionDetailPage = () => {
         setSelectedAsignacion(asignacion);
         setEvolucionesLoading(true);
         try {
-            const data = await getEvolucionesDeAsignacion(asignacion.id);
-            setEvoluciones(data);
+            const [evData, vinData] = await Promise.all([
+                getEvolucionesDeAsignacion(asignacion.id),
+                getVinetasDeAsignacion(asignacion.id),
+            ]);
+            setEvoluciones(evData);
+            setVinetas(vinData);
         } catch (error) {
-            console.error('Error loading evoluciones', error);
+            console.error('Error loading evoluciones/vinetas', error);
         } finally {
             setEvolucionesLoading(false);
         }
@@ -108,12 +117,28 @@ const AtencionDetailPage = () => {
             const tipoAutor = isEstudiante ? 'ESTUDIANTE' : 'DOCENTE';
             await crearEvolucion(selectedAsignacion.id, { tipo_autor: tipoAutor });
             setToast({ message: 'Evolución creada exitosamente', type: 'success' });
-            // Reload evoluciones
             const data = await getEvolucionesDeAsignacion(selectedAsignacion.id);
             setEvoluciones(data);
         } catch (error: unknown) {
             const err = error as { response?: { data?: { detail?: string } } };
             const msg = err.response?.data?.detail || 'Error al crear evolución';
+            setToast({ message: msg, type: 'error' });
+        }
+    };
+
+    const handleCrearVineta = async (e: FormEvent) => {
+        e.preventDefault();
+        if (!selectedAsignacion || !vinetaContenido.trim()) return;
+        try {
+            await crearVineta(selectedAsignacion.id, vinetaContenido.trim());
+            setToast({ message: 'Viñeta creada exitosamente', type: 'success' });
+            setVinetaContenido('');
+            setShowVinetaForm(false);
+            const data = await getVinetasDeAsignacion(selectedAsignacion.id);
+            setVinetas(data);
+        } catch (error: unknown) {
+            const err = error as { response?: { data?: { detail?: string } } };
+            const msg = err.response?.data?.detail || 'Error al crear viñeta';
             setToast({ message: msg, type: 'error' });
         }
     };
@@ -298,58 +323,127 @@ const AtencionDetailPage = () => {
                             <div className="flex items-center">
                                 <FileText className="w-6 h-6 mr-3 text-aqua" />
                                 <h2 className="text-2xl font-worksans font-semibold">
-                                    Evoluciones de {selectedAsignacion.estudiante_nombre}
+                                    Línea de Tiempo — {selectedAsignacion.estudiante_nombre}
                                 </h2>
                             </div>
-                            {(isDocente || (isEstudiante && selectedAsignacion.estudiante === user?.id)) && (
-                                <button
-                                    onClick={handleCrearEvolucion}
-                                    className="inline-flex items-center px-3 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-worksans text-sm font-medium"
-                                >
-                                    <Plus className="w-4 h-4 mr-1" />
-                                    Nueva Evolución
-                                </button>
-                            )}
+                            <div className="flex gap-2">
+                                {isDocente && (
+                                    <button
+                                        onClick={() => setShowVinetaForm(!showVinetaForm)}
+                                        className="inline-flex items-center px-3 py-2 bg-amber-500 text-white rounded-md hover:bg-amber-600 font-worksans text-sm font-medium"
+                                    >
+                                        <MessageSquare className="w-4 h-4 mr-1" />
+                                        Nueva Viñeta
+                                    </button>
+                                )}
+                                {(isDocente || (isEstudiante && selectedAsignacion.estudiante === user?.id)) && (
+                                    <button
+                                        onClick={handleCrearEvolucion}
+                                        className="inline-flex items-center px-3 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-worksans text-sm font-medium"
+                                    >
+                                        <Plus className="w-4 h-4 mr-1" />
+                                        Nueva Evolución
+                                    </button>
+                                )}
+                            </div>
                         </div>
+
+                        {/* Formulario de viñeta */}
+                        {showVinetaForm && isDocente && (
+                            <form onSubmit={handleCrearVineta} className="mb-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+                                <label className="block text-sm font-medium text-gray-700 mb-1 font-worksans">Contenido de la Viñeta</label>
+                                <textarea
+                                    value={vinetaContenido}
+                                    onChange={(e) => setVinetaContenido(e.target.value)}
+                                    rows={3}
+                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-amber-500 focus:border-amber-500"
+                                    placeholder="Ej: Paciente consulta por dolor torácico opresivo de 3 horas de evolución..."
+                                    required
+                                />
+                                <div className="flex justify-end gap-2 mt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setShowVinetaForm(false); setVinetaContenido(''); }}
+                                        className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 font-worksans"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-1.5 bg-amber-500 text-white rounded-md hover:bg-amber-600 font-worksans text-sm font-medium"
+                                    >
+                                        Crear Viñeta
+                                    </button>
+                                </div>
+                            </form>
+                        )}
 
                         {evolucionesLoading ? (
                             <div className="flex items-center justify-center py-8">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-aqua"></div>
                             </div>
-                        ) : evoluciones.length === 0 ? (
+                        ) : (vinetas.length === 0 && evoluciones.length === 0) ? (
                             <div className="text-center py-8">
                                 <FileText className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                                <p className="text-gray-500 font-worksans">No hay evoluciones registradas.</p>
+                                <p className="text-gray-500 font-worksans">No hay viñetas ni evoluciones registradas.</p>
                             </div>
                         ) : (
                             <div className="space-y-4">
-                                {evoluciones.map((evolucion) => (
-                                    <Link
-                                        key={evolucion.id}
-                                        to={`/evoluciones/${evolucion.id}`}
-                                        className="block border border-gray-200 rounded-lg p-4 hover:border-aqua hover:shadow-md transition-all"
-                                    >
-                                        <div className="flex justify-between items-start">
-                                            <div>
-                                                <div className="flex items-center gap-2 mb-1">
-                                                    <span className="font-semibold text-gray-900 font-worksans">
-                                                        Evolución #{evolucion.numero}
+                                {[
+                                    ...vinetas.map((v) => ({ tipo: 'vineta' as const, fecha: v.created_at, data: v })),
+                                    ...evoluciones.map((e) => ({ tipo: 'evolucion' as const, fecha: e.fecha_creacion, data: e })),
+                                ]
+                                    .sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime())
+                                    .map((item) =>
+                                        item.tipo === 'vineta' ? (
+                                            <div
+                                                key={`vineta-${(item.data as Vineta).id}`}
+                                                className="border-l-4 border-l-amber-400 border border-amber-200 rounded-lg p-4 bg-amber-50"
+                                            >
+                                                <div className="flex items-center gap-2 mb-2">
+                                                    <MessageSquare className="w-4 h-4 text-amber-600" />
+                                                    <span className="font-semibold text-amber-800 font-worksans text-sm">
+                                                        Viñeta #{(item.data as Vineta).numero}
                                                     </span>
-                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${evolucion.tipo_autor === 'DOCENTE' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}`}>
-                                                        {evolucion.tipo_autor}
+                                                    <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                                                        Docente
                                                     </span>
                                                 </div>
-                                                <p className="text-sm text-gray-600 font-worksans">
-                                                    Autor: {evolucion.nombre_autor}
+                                                <p className="text-gray-800 font-worksans text-sm whitespace-pre-wrap">
+                                                    {(item.data as Vineta).contenido}
                                                 </p>
-                                                <p className="text-xs text-gray-500 font-worksans">
-                                                    {new Date(evolucion.fecha_creacion).toLocaleString('es-CL')}
+                                                <p className="text-xs text-gray-500 font-worksans mt-2">
+                                                    {(item.data as Vineta).creada_por_nombre} — {new Date((item.data as Vineta).created_at).toLocaleString('es-CL')}
                                                 </p>
                                             </div>
-                                            <Stethoscope className="w-5 h-5 text-gray-400" />
-                                        </div>
-                                    </Link>
-                                ))}
+                                        ) : (
+                                            <Link
+                                                key={`evo-${(item.data as Evolucion).id}`}
+                                                to={`/evoluciones/${(item.data as Evolucion).id}`}
+                                                className="block border border-gray-200 rounded-lg p-4 hover:border-aqua hover:shadow-md transition-all"
+                                            >
+                                                <div className="flex justify-between items-start">
+                                                    <div>
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className="font-semibold text-gray-900 font-worksans">
+                                                                Evolución #{(item.data as Evolucion).numero}
+                                                            </span>
+                                                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${(item.data as Evolucion).tipo_autor === 'DOCENTE' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}`}>
+                                                                {(item.data as Evolucion).tipo_autor}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-sm text-gray-600 font-worksans">
+                                                            Autor: {(item.data as Evolucion).nombre_autor}
+                                                        </p>
+                                                        <p className="text-xs text-gray-500 font-worksans">
+                                                            {new Date((item.data as Evolucion).fecha_creacion).toLocaleString('es-CL')}
+                                                        </p>
+                                                    </div>
+                                                    <Stethoscope className="w-5 h-5 text-gray-400" />
+                                                </div>
+                                            </Link>
+                                        )
+                                    )}
                             </div>
                         )}
                     </div>

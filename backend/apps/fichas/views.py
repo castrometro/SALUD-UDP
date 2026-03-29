@@ -5,14 +5,16 @@ from django.db import models as db_models
 from django.db.models import Count
 from django.contrib.auth import get_user_model
 
-from .models import CasoClinico, AtencionClinica, AtencionEstudiante, Evolucion, CAMPOS_CLINICOS_DEFAULT
+from .models import CasoClinico, AtencionClinica, AtencionEstudiante, Evolucion, Vineta, CAMPOS_CLINICOS_DEFAULT
 from .serializers import (
     CasoClinicoSerializer,
     AtencionClinicaSerializer,
     AtencionEstudianteSerializer,
     EvolucionSerializer,
+    VinetaSerializer,
     AsignarEstudianteSerializer,
     CrearEvolucionSerializer,
+    CrearVinetaSerializer,
 )
 from apps.users.permissions import IsOwnerOrDocenteOrAdmin
 
@@ -259,6 +261,7 @@ class AtencionEstudianteViewSet(viewsets.ModelViewSet):
             tipo_autor=data['tipo_autor'],
             nombre_autor=nombre_autor,
             creado_por=user,
+            vineta_id=data.get('vineta'),
         )
         return Response(
             EvolucionSerializer(evolucion, context={'request': request}).data,
@@ -271,6 +274,48 @@ class AtencionEstudianteViewSet(viewsets.ModelViewSet):
         asignacion = self.get_object()
         evoluciones = asignacion.evoluciones.select_related('creado_por').order_by('numero')
         serializer = EvolucionSerializer(evoluciones, many=True, context={'request': request})
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'])
+    def crear_vineta(self, request, pk=None):
+        """
+        POST /api/fichas/atenciones-estudiantes/{id}/crear_vineta/
+        Body: { "contenido": "Paciente consulta por..." }
+        """
+        asignacion = self.get_object()
+        serializer = CrearVinetaSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        user = request.user
+
+        # Solo docentes/admin pueden crear viñetas
+        if user.role not in ['ADMIN', 'DOCENTE']:
+            return Response(
+                {'detail': 'Solo docentes o administradores pueden crear viñetas.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Calcular número secuencial
+        ultima = asignacion.vinetas.order_by('-numero').first()
+        numero = (ultima.numero + 1) if ultima else 1
+
+        vineta = Vineta.objects.create(
+            atencion_estudiante=asignacion,
+            numero=numero,
+            contenido=serializer.validated_data['contenido'],
+            creada_por=user,
+        )
+        return Response(
+            VinetaSerializer(vineta, context={'request': request}).data,
+            status=status.HTTP_201_CREATED
+        )
+
+    @action(detail=True, methods=['get'])
+    def vinetas(self, request, pk=None):
+        """Lista las viñetas de una asignación."""
+        asignacion = self.get_object()
+        vinetas = asignacion.vinetas.select_related('creada_por').order_by('numero')
+        serializer = VinetaSerializer(vinetas, many=True, context={'request': request})
         return Response(serializer.data)
 
 
@@ -297,6 +342,44 @@ class EvolucionViewSet(viewsets.ModelViewSet):
             'atencion_estudiante__atencion_clinica__paciente',
             'atencion_estudiante__estudiante',
             'creado_por',
+        )
+
+        if user.role not in ['ADMIN', 'DOCENTE']:
+            queryset = queryset.filter(atencion_estudiante__estudiante=user)
+
+        atencion_estudiante_id = self.request.query_params.get('atencion_estudiante')
+        if atencion_estudiante_id:
+            queryset = queryset.filter(atencion_estudiante_id=atencion_estudiante_id)
+
+        return queryset.order_by('numero')
+
+    def get_permissions(self):
+        if self.action in ['partial_update']:
+            return [permissions.IsAuthenticated(), IsOwnerOrDocenteOrAdmin()]
+        return [permissions.IsAuthenticated()]
+
+
+# ──────────────────────────────────────────────
+# Viñeta ViewSet (lectura + actualización)
+# ──────────────────────────────────────────────
+
+class VinetaViewSet(viewsets.ModelViewSet):
+    """
+    Viñetas (inyecciones de contexto narrativo).
+    - Lectura: cualquier autenticado que tenga acceso a la asignación.
+    - Creación: via AtencionEstudianteViewSet.crear_vineta (preferred).
+    - Actualización: solo docente/admin.
+    """
+    serializer_class = VinetaSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    http_method_names = ['get', 'patch', 'head', 'options']
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = Vineta.objects.select_related(
+            'atencion_estudiante', 'atencion_estudiante__atencion_clinica',
+            'atencion_estudiante__estudiante',
+            'creada_por',
         )
 
         if user.role not in ['ADMIN', 'DOCENTE']:

@@ -7,9 +7,9 @@ Maneja la UI para casos clínicos, atenciones clínicas, asignaciones de estudia
 
 ```
 features/fichas/
-├── types.ts                    # CasoClinico, AtencionClinica, AtencionEstudiante, Evolucion
+├── types.ts                    # CasoClinico, AtencionClinica, AtencionEstudiante, Evolucion, Vineta
 ├── services/
-│   └── fichaService.ts         # API calls para los 4 modelos + acciones custom
+│   └── fichaService.ts         # API calls para los 5 modelos + acciones custom
 ├── pages/
 │   ├── FichaListPage.tsx       # Lista de casos clínicos con búsqueda
 │   ├── FichaFormPage.tsx       # Formulario crear/editar caso clínico
@@ -42,7 +42,7 @@ interface ContenidoClinico {
 
 ### `CasoClinico`
 Escenario genérico reutilizable (sin paciente):
-- `id`, `titulo`, `descripcion`.
+- `id`, `titulo`, `tema`, `descripcion`.
 - Trazabilidad: `creado_por`/`modificado_por` (IDs), `creado_por_nombre`/`modificado_por_nombre`, timestamps.
 - Agregado: `total_atenciones`.
 
@@ -66,7 +66,15 @@ Nota clínica en cadena:
 - `id`, `atencion_estudiante` (ID), `numero`.
 - `contenido` (ContenidoClinico).
 - `tipo_autor` (TipoAutor: 'ESTUDIANTE' | 'DOCENTE'), `nombre_autor`.
+- `vineta` (ID | null) — viñeta a la que responde (opcional).
 - Trazabilidad: `creado_por`/`creado_por_nombre`, `fecha_creacion`.
+
+### `Vineta`
+Inyección de contexto narrativo del docente:
+- `id`, `atencion_estudiante` (ID), `numero`.
+- `contenido` (string) — texto narrativo.
+- `creada_por` (ID | null), `creada_por_nombre`.
+- `created_at`.
 
 ## Servicio (`fichaService.ts`)
 
@@ -75,7 +83,7 @@ Nota clínica en cadena:
 |---------|--------|----------|
 | `getCasosClinicos(page, pageSize, search?)` | GET | `/fichas/casos-clinicos/?...` |
 | `getCasoClinico(id)` | GET | `/fichas/casos-clinicos/{id}/` |
-| `createCasoClinico({titulo, descripcion})` | POST | `/fichas/casos-clinicos/` |
+| `createCasoClinico({titulo, tema, descripcion})` | POST | `/fichas/casos-clinicos/` |
 | `updateCasoClinico(id, data)` | PATCH | `/fichas/casos-clinicos/{id}/` |
 | `deleteCasoClinico(id)` | DELETE | `/fichas/casos-clinicos/{id}/` |
 | `getAtencionesDeCaso(casoId, page, pageSize)` | GET | `/fichas/casos-clinicos/{id}/atenciones/` |
@@ -96,8 +104,10 @@ Nota clínica en cadena:
 |---------|--------|----------|
 | `getAtencionesEstudiante(page, pageSize, estudianteId?, atencionClinicaId?)` | GET | `/fichas/atenciones-estudiantes/?...` |
 | `getAtencionEstudiante(id)` | GET | `/fichas/atenciones-estudiantes/{id}/` |
-| `crearEvolucion(asignacionId, {contenido, tipo_autor, nombre_autor})` | POST | `/fichas/atenciones-estudiantes/{id}/crear_evolucion/` |
+| `crearEvolucion(asignacionId, {contenido, tipo_autor, nombre_autor, vineta})` | POST | `/fichas/atenciones-estudiantes/{id}/crear_evolucion/` |
 | `getEvolucionesDeAsignacion(asignacionId)` | GET | `/fichas/atenciones-estudiantes/{id}/evoluciones/` |
+| `crearVineta(asignacionId, contenido)` | POST | `/fichas/atenciones-estudiantes/{id}/crear_vineta/` |
+| `getVinetasDeAsignacion(asignacionId)` | GET | `/fichas/atenciones-estudiantes/{id}/vinetas/` |
 
 ### Evoluciones
 | Función | Método | Endpoint |
@@ -118,9 +128,9 @@ Lista de casos clínicos con búsqueda server-side y paginación.
 
 ### `FichaFormPage.tsx`
 Formulario para crear/editar casos clínicos.
-- **Estado**: `formData` (titulo, descripcion), `isEdit`, `toast`.
+- **Estado**: `formData` (titulo, tema, descripcion), `isEdit`, `toast`.
 - Carga caso clínico si edita (por ID en URL).
-- Campos: título (input), descripción narrativa (textarea grande).
+- Campos: título (input), tema/unidad temática (input), descripción narrativa (textarea grande).
 - **No incluye selector de paciente** — el paciente se asigna al crear una atención.
 
 ### `FichaDetailPage.tsx`
@@ -136,12 +146,14 @@ Crear una atención clínica dentro de un caso.
 - Al guardar, navega a `/atenciones/${atencion.id}`.
 
 ### `AtencionDetailPage.tsx`
-Detalle de una atención clínica con estudiantes y evoluciones.
+Detalle de una atención clínica con estudiantes, viñetas y evoluciones.
 - Muestra info del caso, paciente, fecha.
 - Lista de estudiantes asignados en grid.
 - Modal para asignar nuevo estudiante (por ID).
-- Al seleccionar un estudiante, muestra sus evoluciones.
-- Docentes pueden crear evoluciones como "Doctor" (con `nombre_autor` personalizable).
+- Al seleccionar un estudiante, carga viñetas y evoluciones en paralelo.
+- **Línea de Tiempo**: Muestra viñetas (tarjetas ámbar) y evoluciones (tarjetas con enlace) del estudiante seleccionado.
+- Docentes pueden crear viñetas (formulario inline con textarea) y evoluciones como "Doctor".
+- Estudiantes solo crean evoluciones en sus propias asignaciones.
 
 ### `EvolucionPage.tsx`
 Ver/editar una evolución individual con los 8 campos clínicos.

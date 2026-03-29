@@ -19,6 +19,7 @@ CAMPOS_CLINICOS_DEFAULT = {
 class CasoClinico(models.Model):
     """Escenario clínico genérico creado por el docente. Reutilizable con distintos pacientes."""
     titulo = models.CharField(max_length=255, help_text="Nombre descriptivo del caso clínico")
+    tema = models.CharField(max_length=255, blank=True, default='', help_text="Unidad temática o curricular")
     descripcion = models.TextField(blank=True, default='', help_text="Narrativa completa del escenario clínico")
 
     # Trazabilidad
@@ -120,11 +121,50 @@ class TipoAutor(models.TextChoices):
     DOCENTE = 'DOCENTE', 'Docente'
 
 
+class Vineta(models.Model):
+    """Inyección de contexto narrativo del docente para un estudiante específico."""
+    atencion_estudiante = models.ForeignKey(
+        AtencionEstudiante, on_delete=models.CASCADE,
+        related_name="vinetas"
+    )
+    numero = models.PositiveIntegerField(
+        help_text="Número secuencial de la viñeta dentro de esta asignación"
+    )
+    contenido = models.TextField(
+        help_text="Texto narrativo de la viñeta (motivo de consulta, resultados, etc.)"
+    )
+    creada_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL,
+        null=True, related_name="vinetas_creadas"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Viñeta"
+        verbose_name_plural = "Viñetas"
+        ordering = ['numero']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['atencion_estudiante', 'numero'],
+                name='unique_numero_por_vineta'
+            )
+        ]
+
+    def __str__(self):
+        return f"Viñeta #{self.numero} - Asignación {self.atencion_estudiante_id}"
+
+
 class Evolucion(models.Model):
     """Nota clínica en la cadena de evoluciones de una atención-estudiante."""
     atencion_estudiante = models.ForeignKey(
         AtencionEstudiante, on_delete=models.CASCADE,
         related_name="evoluciones"
+    )
+    vineta = models.ForeignKey(
+        Vineta, on_delete=models.SET_NULL,
+        null=True, blank=True,
+        related_name="evoluciones_asociadas",
+        help_text="Viñeta a la que responde esta evolución (opcional)"
     )
     numero = models.PositiveIntegerField(
         help_text="Número secuencial de la evolución dentro de esta asignación"

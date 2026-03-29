@@ -30,6 +30,7 @@ export const CONTENIDO_DEFAULT: ContenidoClinico = {
 export interface CasoClinico {
     id: number;
     titulo: string;
+    tema: string;
     descripcion: string;
 
     creado_por: number | null;
@@ -89,6 +90,7 @@ export type TipoAutor = 'ESTUDIANTE' | 'DOCENTE';
 export interface Evolucion {
     id: number;
     atencion_estudiante: number;
+    vineta: number | null;
     numero: number;
     contenido: ContenidoClinico;
     tipo_autor: TipoAutor;
@@ -96,4 +98,18 @@ export interface Evolucion {
     creado_por: number | null;
     creado_por_nombre: string | null;
     fecha_creacion: string;
+}
+
+// ──────────────────────────────────────────────
+// Viñeta (inyección de contexto narrativo)
+// ──────────────────────────────────────────────
+
+export interface Vineta {
+    id: number;
+    atencion_estudiante: number;
+    numero: number;
+    contenido: string;
+    creada_por: number | null;
+    creada_por_nombre: string | null;
+    created_at: string;
 }

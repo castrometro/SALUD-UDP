@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import CasoClinico, AtencionClinica, AtencionEstudiante, Evolucion
+from .models import CasoClinico, AtencionClinica, AtencionEstudiante, Evolucion, Vineta
 
 
 @admin.register(CasoClinico)
@@ -31,4 +31,12 @@ class EvolucionAdmin(admin.ModelAdmin):
     list_display = ('id', 'atencion_estudiante', 'numero', 'tipo_autor', 'nombre_autor', 'fecha_creacion')
     list_filter = ('tipo_autor', 'fecha_creacion')
     search_fields = ('nombre_autor',)
-    raw_id_fields = ('atencion_estudiante', 'creado_por')
+    raw_id_fields = ('atencion_estudiante', 'creado_por', 'vineta')
+
+
+@admin.register(Vineta)
+class VinetaAdmin(admin.ModelAdmin):
+    list_display = ('id', 'atencion_estudiante', 'numero', 'creada_por', 'created_at')
+    list_filter = ('created_at',)
+    search_fields = ('contenido',)
+    raw_id_fields = ('atencion_estudiante', 'creada_por')

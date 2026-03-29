@@ -160,8 +160,15 @@ const FichaListPage = () => {
                                                         >
                                                             {caso.titulo}
                                                         </Link>
-                                                        <div className="text-sm text-gray-500 font-worksans max-w-xs truncate">
-                                                            {caso.descripcion || <span className="text-gray-400 italic">Sin descripción</span>}
+                                                        <div className="flex items-center gap-2 mt-0.5">
+                                                            {caso.tema && (
+                                                                <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold font-worksans">
+                                                                    {caso.tema}
+                                                                </span>
+                                                            )}
+                                                            <span className="text-sm text-gray-500 font-worksans max-w-xs truncate">
+                                                                {caso.descripcion || <span className="text-gray-400 italic">Sin descripción</span>}
+                                                            </span>
                                                         </div>
                                                     </div>
                                                 </div>

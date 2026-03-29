@@ -1,5 +1,5 @@
 import api from '@/services/api';
-import { CasoClinico, AtencionClinica, AtencionEstudiante, Evolucion } from '../types';
+import { CasoClinico, AtencionClinica, AtencionEstudiante, Evolucion, Vineta } from '../types';
 import { PaginatedResponse } from '@/types/common';
 
 // ──────────────────────────────────────────────
@@ -18,12 +18,12 @@ export const getCasoClinico = async (id: number): Promise<CasoClinico> => {
     return response.data;
 };
 
-export const createCasoClinico = async (data: { titulo: string; descripcion?: string }): Promise<CasoClinico> => {
+export const createCasoClinico = async (data: { titulo: string; tema?: string; descripcion?: string }): Promise<CasoClinico> => {
     const response = await api.post<CasoClinico>('/fichas/casos-clinicos/', data);
     return response.data;
 };
 
-export const updateCasoClinico = async (id: number, data: { titulo?: string; descripcion?: string }): Promise<CasoClinico> => {
+export const updateCasoClinico = async (id: number, data: { titulo?: string; tema?: string; descripcion?: string }): Promise<CasoClinico> => {
     const response = await api.patch<CasoClinico>(`/fichas/casos-clinicos/${id}/`, data);
     return response.data;
 };
@@ -104,7 +104,7 @@ export const getAtencionEstudiante = async (id: number): Promise<AtencionEstudia
     return response.data;
 };
 
-export const crearEvolucion = async (asignacionId: number, data: { contenido?: Record<string, string>; tipo_autor: string; nombre_autor?: string }): Promise<Evolucion> => {
+export const crearEvolucion = async (asignacionId: number, data: { contenido?: Record<string, string>; tipo_autor: string; nombre_autor?: string; vineta?: number | null }): Promise<Evolucion> => {
     const response = await api.post<Evolucion>(
         `/fichas/atenciones-estudiantes/${asignacionId}/crear_evolucion/`,
         data
@@ -137,5 +137,24 @@ export const getEvolucion = async (id: number): Promise<Evolucion> => {
 
 export const updateEvolucion = async (id: number, data: { contenido: Record<string, string> }): Promise<Evolucion> => {
     const response = await api.patch<Evolucion>(`/fichas/evoluciones/${id}/`, data);
+    return response.data;
+};
+
+// ──────────────────────────────────────────────
+// Viñetas
+// ──────────────────────────────────────────────
+
+export const crearVineta = async (asignacionId: number, contenido: string): Promise<Vineta> => {
+    const response = await api.post<Vineta>(
+        `/fichas/atenciones-estudiantes/${asignacionId}/crear_vineta/`,
+        { contenido }
+    );
+    return response.data;
+};
+
+export const getVinetasDeAsignacion = async (asignacionId: number): Promise<Vineta[]> => {
+    const response = await api.get<Vineta[]>(
+        `/fichas/atenciones-estudiantes/${asignacionId}/vinetas/`
+    );
     return response.data;
 };

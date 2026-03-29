@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
     Phone, Mail, MapPin, Calendar, Activity,
-    FileText, Clock, ChevronLeft, Users, BookOpen
+    FileText, Clock, ChevronLeft, Users, BookOpen, Heart
 } from 'lucide-react';
 import { formatRut } from '@/utils/rut';
 import { Paciente } from '../types';
@@ -75,6 +75,11 @@ const PacienteDetailPage = () => {
                                         }`}>
                                         {paciente.prevision}
                                     </span>
+                                    {paciente.sexo && paciente.sexo !== 'NO_INFORMA' && (
+                                        <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-semibold font-worksans">
+                                            {paciente.sexo === 'MASCULINO' ? 'Masculino' : paciente.sexo === 'FEMENINO' ? 'Femenino' : 'Otro'}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -119,6 +124,36 @@ const PacienteDetailPage = () => {
                         </div>
                     </div>
                 </div>
+
+                {/* Perfil Clínico */}
+                {(paciente.antecedentes_personales || paciente.medicamentos_habituales || paciente.alergias) && (
+                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
+                        <h2 className="text-xl font-arizona font-medium text-gray-900 flex items-center gap-2 mb-6">
+                            <Heart className="w-5 h-5 text-red-400" />
+                            Perfil Clínico
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <p className="text-sm text-gray-500 font-worksans mb-1">Antecedentes Personales</p>
+                                <p className="text-gray-900 font-worksans whitespace-pre-line">
+                                    {paciente.antecedentes_personales || <span className="text-gray-400 italic">Sin información</span>}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500 font-worksans mb-1">Medicamentos Habituales</p>
+                                <p className="text-gray-900 font-worksans whitespace-pre-line">
+                                    {paciente.medicamentos_habituales || <span className="text-gray-400 italic">Sin información</span>}
+                                </p>
+                            </div>
+                            <div>
+                                <p className="text-sm text-gray-500 font-worksans mb-1">Alergias</p>
+                                <p className="text-gray-900 font-worksans whitespace-pre-line">
+                                    {paciente.alergias || <span className="text-gray-400 italic">Sin información</span>}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Atenciones Clínicas */}
                 <div className="flex items-center justify-between mb-6">

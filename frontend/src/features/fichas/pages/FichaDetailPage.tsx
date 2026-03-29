@@ -155,6 +155,11 @@ const FichaDetailPage = () => {
                             <h1 className="text-4xl font-arizona font-medium text-gray-900 mb-2">
                                 {caso.titulo}
                             </h1>
+                            {caso.tema && (
+                                <span className="inline-flex items-center px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-sm font-semibold font-worksans">
+                                    {caso.tema}
+                                </span>
+                            )}
                             <p className="text-sm text-gray-500 font-worksans mt-2">
                                 Creado por {caso.creado_por_nombre || 'Desconocido'} el {new Date(caso.fecha_creacion).toLocaleDateString()}
                                 {caso.modificado_por_nombre && (

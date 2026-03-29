@@ -1,6 +1,6 @@
 import factory
 from factory.django import DjangoModelFactory
-from apps.fichas.models import CasoClinico, AtencionClinica, AtencionEstudiante, Evolucion, CAMPOS_CLINICOS_DEFAULT
+from apps.fichas.models import CasoClinico, AtencionClinica, AtencionEstudiante, Evolucion, Vineta, CAMPOS_CLINICOS_DEFAULT
 from apps.pacientes.tests.factories import PacienteFactory
 from apps.users.tests.factories import UserFactory
 
@@ -43,3 +43,13 @@ class EvolucionFactory(DjangoModelFactory):
     tipo_autor = 'ESTUDIANTE'
     nombre_autor = factory.LazyAttribute(lambda o: o.atencion_estudiante.estudiante.get_full_name())
     creado_por = factory.LazyAttribute(lambda o: o.atencion_estudiante.estudiante)
+
+
+class VinetaFactory(DjangoModelFactory):
+    class Meta:
+        model = Vineta
+
+    atencion_estudiante = factory.SubFactory(AtencionEstudianteFactory)
+    numero = factory.Sequence(lambda n: n + 1)
+    contenido = factory.Faker('paragraph', nb_sentences=2, locale='es_CL')
+    creada_por = factory.LazyAttribute(lambda o: o.atencion_estudiante.asignado_por)

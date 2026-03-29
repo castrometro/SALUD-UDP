@@ -1,11 +1,12 @@
 # Documentación del Módulo: Fichas (Backend)
 
 ## Propósito
-Núcleo del sistema. Gestiona fichas clínicas de simulación con una arquitectura de 4 modelos principales:
+Núcleo del sistema. Gestiona fichas clínicas de simulación con una arquitectura de 5 modelos principales:
 1. **CasoClinico**: Escenario genérico reutilizable creado por docentes (sin paciente asociado).
 2. **AtencionClinica**: Sesión clínica que une caso + paciente + fecha.
 3. **AtencionEstudiante**: Asignación de un estudiante a una atención (hecha por el docente).
-4. **Evolucion**: Nota clínica en cadena, escrita por estudiantes o docentes.
+4. **Vineta**: Inyección de contexto narrativo del docente, individual por estudiante.
+5. **Evolucion**: Nota clínica en cadena, escrita por estudiantes o docentes.
 
 El contenido clínico se almacena como **JSONField**, lo que permite:
 - Diferentes estructuras de campos según el tipo de atención (futuro).
@@ -19,6 +20,7 @@ Escenario genérico reutilizable. **No tiene FK a Paciente** — el paciente se 
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
 | `titulo` | CharField(255) | Nombre descriptivo del caso |
+| `tema` | CharField(255) | Unidad temática o curricular (opcional) |
 | `descripcion` | TextField | Descripción narrativa del escenario clínico |
 | `creado_por` | FK → User | Quién lo creó. `on_delete=SET_NULL` |
 | `modificado_por` | FK → User | Última persona que lo modificó. `on_delete=SET_NULL` |
@@ -65,6 +67,7 @@ Nota clínica en cadena dentro de una asignación estudiante-atención.
 | Campo | Tipo | Descripción |
 |-------|------|-------------|
 | `atencion_estudiante` | FK → AtencionEstudiante | Asignación. `on_delete=CASCADE` |
+| `vineta` | FK → Vineta | Viñeta a la que responde (opcional). `on_delete=SET_NULL` |
 | `numero` | PositiveIntegerField | Número secuencial dentro de la asignación |
 | `contenido` | JSONField | Campos clínicos (8 campos por defecto) |
 | `tipo_autor` | CharField(20) | `TipoAutor` choices |
@@ -91,6 +94,20 @@ Nota clínica en cadena dentro de una asignación estudiante-atención.
 
 **Constante**: `CAMPOS_CLINICOS_DEFAULT` — diccionario con la estructura por defecto del contenido.
 
+### `Vineta`
+Inyección de contexto narrativo del docente para un estudiante específico (individual por asignación).
+
+| Campo | Tipo | Descripción |
+|-------|------|-------------|
+| `atencion_estudiante` | FK → AtencionEstudiante | Asignación. `on_delete=CASCADE` |
+| `numero` | PositiveIntegerField | Número secuencial de la viñeta |
+| `contenido` | TextField | Texto narrativo (motivo de consulta, resultados, etc.) |
+| `creada_por` | FK → User | Docente que la creó. `on_delete=SET_NULL` |
+| `created_at` | DateTimeField | `auto_now_add` |
+
+**Constraint**: `UniqueConstraint(fields=['atencion_estudiante', 'numero'])`.
+**Ordering**: `numero` (ascendente)
+
 ## Serializers (`serializers.py`)
 
 ### `CasoClinicoSerializer`
@@ -116,11 +133,19 @@ Nota clínica en cadena dentro de una asignación estudiante-atención.
 - Read-only: `numero`, `creado_por`, `fecha_creacion`.
 - **En `create()`**: Auto-calcula `numero` secuencial, asigna `creado_por`, auto-rellena `nombre_autor` y `contenido` si no se proporcionan.
 
+### `VinetaSerializer`
+- Campos calculados: `creada_por_nombre`.
+- Read-only: `numero`, `creada_por`, `created_at`.
+- **En `create()`**: Auto-calcula `numero` secuencial, asigna `creada_por`.
+
 ### `AsignarEstudianteSerializer`
 - Recibe `estudiante_id`. Valida existencia y rol ESTUDIANTE.
 
 ### `CrearEvolucionSerializer`
-- Recibe `contenido` (opcional), `tipo_autor` (obligatorio), `nombre_autor` (opcional).
+- Recibe `contenido` (opcional), `tipo_autor` (obligatorio), `nombre_autor` (opcional), `vineta` (ID opcional).
+
+### `CrearVinetaSerializer`
+- Recibe `contenido` (obligatorio). Solo docentes pueden crear viñetas.
 
 ## Vistas (`views.py`)
 
@@ -146,6 +171,13 @@ Nota clínica en cadena dentro de una asignación estudiante-atención.
 - **Acciones custom**:
   - `crear_evolucion/` (POST, detail=True): Crea evolución. Valida permisos por rol.
   - `evoluciones/` (GET, detail=True): Lista evoluciones de la asignación (sin paginar, ordenadas por `numero`).
+  - `crear_vineta/` (POST, detail=True): Crea viñeta. Solo docentes/admin.
+  - `vinetas/` (GET, detail=True): Lista viñetas de la asignación (sin paginar, ordenadas por `numero`).
+
+### `VinetaViewSet`
+- **http_method_names**: `['get', 'patch', 'head', 'options']` — solo lectura + actualización parcial.
+- **Filtrado por rol**: Estudiante solo ve viñetas de sus asignaciones. `?atencion_estudiante=`.
+- **Permisos**: `IsOwnerOrDocenteOrAdmin` para `partial_update`.
 
 ### `EvolucionViewSet`
 - **http_method_names**: `['get', 'patch', 'head', 'options']` — solo lectura + actualización parcial.
@@ -183,6 +215,15 @@ Nota clínica en cadena dentro de una asignación estudiante-atención.
 | DELETE | `/api/fichas/atenciones-estudiantes/{id}/` | Docente/Admin | Eliminar asignación (cascade borra evoluciones) |
 | POST | `/api/fichas/atenciones-estudiantes/{id}/crear_evolucion/` | Autenticado | Crear evolución |
 | GET | `/api/fichas/atenciones-estudiantes/{id}/evoluciones/` | Autenticado | Evoluciones de la asignación |
+| POST | `/api/fichas/atenciones-estudiantes/{id}/crear_vineta/` | Docente/Admin | Crear viñeta |
+| GET | `/api/fichas/atenciones-estudiantes/{id}/vinetas/` | Autenticado | Viñetas de la asignación |
+
+### Viñetas
+| Método | Endpoint | Rol | Descripción |
+|--------|----------|-----|-------------|
+| GET | `/api/fichas/vinetas/` | Autenticado | Lista (filtrada por rol, `?atencion_estudiante=`) |
+| GET | `/api/fichas/vinetas/{id}/` | Autenticado | Detalle |
+| PATCH | `/api/fichas/vinetas/{id}/` | Dueño/Docente/Admin | Editar contenido |
 
 ### Evoluciones
 | Método | Endpoint | Rol | Descripción |
@@ -195,8 +236,8 @@ Nota clínica en cadena dentro de una asignación estudiante-atención.
 
 ```
 CasoClinico ──(1:N)──→ AtencionClinica ──(1:N)──→ AtencionEstudiante ──(1:N)──→ Evolucion
-                            │
-                       Paciente (N:1)
+                            │                                       │
+                       Paciente (N:1)                          Vineta (1:N)
 ```
 
 | Relación | on_delete | Efecto |
@@ -206,4 +247,6 @@ CasoClinico ──(1:N)──→ AtencionClinica ──(1:N)──→ AtencionEs
 | AtencionEstudiante → AtencionClinica | `PROTECT` | No se puede borrar atención con asignaciones (409) |
 | AtencionEstudiante → Estudiante | `SET_NULL` | Si se borra usuario, asignación se conserva |
 | Evolucion → AtencionEstudiante | `CASCADE` | Si se borra asignación, se borran evoluciones |
+| Evolucion → Vineta | `SET_NULL` | Si se borra viñeta, evolución se conserva |
+| Vineta → AtencionEstudiante | `CASCADE` | Si se borra asignación, se borran viñetas |
 | *.creado_por / *.modificado_por / *.asignado_por | `SET_NULL` | Trazabilidad se conserva como null |

@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import (
-    CasoClinico, AtencionClinica, AtencionEstudiante, Evolucion,
+    CasoClinico, AtencionClinica, AtencionEstudiante, Evolucion, Vineta,
     CAMPOS_CLINICOS_DEFAULT,
 )
 from apps.pacientes.serializers import PacienteSerializer
@@ -100,6 +100,31 @@ class AtencionEstudianteSerializer(serializers.ModelSerializer):
 
 
 # ──────────────────────────────────────────────
+# Viñeta
+# ──────────────────────────────────────────────
+
+class VinetaSerializer(serializers.ModelSerializer):
+    creada_por_nombre = serializers.ReadOnlyField(source='creada_por.get_full_name')
+
+    class Meta:
+        model = Vineta
+        fields = '__all__'
+        read_only_fields = ('numero', 'creada_por', 'created_at')
+
+    def create(self, validated_data):
+        request = self.context.get('request')
+        if request and hasattr(request, 'user'):
+            validated_data['creada_por'] = request.user
+
+        # Auto-calcular número secuencial
+        atencion_est = validated_data['atencion_estudiante']
+        ultima = atencion_est.vinetas.order_by('-numero').first()
+        validated_data['numero'] = (ultima.numero + 1) if ultima else 1
+
+        return super().create(validated_data)
+
+
+# ──────────────────────────────────────────────
 # Evolución
 # ──────────────────────────────────────────────
 
@@ -160,3 +185,9 @@ class CrearEvolucionSerializer(serializers.Serializer):
     contenido = serializers.JSONField(required=False, default=dict)
     tipo_autor = serializers.ChoiceField(choices=[('ESTUDIANTE', 'Estudiante'), ('DOCENTE', 'Docente')])
     nombre_autor = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    vineta = serializers.IntegerField(required=False, allow_null=True, default=None)
+
+
+class CrearVinetaSerializer(serializers.Serializer):
+    """Crear una viñeta en una atención-estudiante."""
+    contenido = serializers.CharField()
