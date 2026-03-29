@@ -175,7 +175,7 @@ class AsignarEstudianteSerializer(serializers.Serializer):
             user = User.objects.get(id=value)
         except User.DoesNotExist:
             raise serializers.ValidationError("El estudiante no existe")
-        if user.role != 'ESTUDIANTE':
+        if user.role != User.Role.ESTUDIANTE:
             raise serializers.ValidationError("El usuario no tiene rol de estudiante")
         return value
 

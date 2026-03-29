@@ -16,7 +16,7 @@ from .serializers import (
     CrearEvolucionSerializer,
     CrearVinetaSerializer,
 )
-from apps.users.permissions import IsOwnerOrDocenteOrAdmin
+from apps.common.permissions import IsOwnerOrDocenteOrAdmin
 
 User = get_user_model()
 
@@ -105,7 +105,7 @@ class AtencionClinicaViewSet(viewsets.ModelViewSet):
         )
 
         # Estudiantes solo ven atenciones donde están asignados
-        if user.role not in ['ADMIN', 'DOCENTE']:
+        if user.role not in (User.Role.ADMIN, User.Role.DOCENTE):
             queryset = queryset.filter(asignaciones__estudiante=user)
 
         caso_id = self.request.query_params.get('caso_clinico')
@@ -199,7 +199,7 @@ class AtencionEstudianteViewSet(viewsets.ModelViewSet):
             total_evoluciones=Count('evoluciones')
         )
 
-        if user.role not in ['ADMIN', 'DOCENTE']:
+        if user.role not in (User.Role.ADMIN, User.Role.DOCENTE):
             queryset = queryset.filter(estudiante=user)
 
         atencion_id = self.request.query_params.get('atencion_clinica')
@@ -207,7 +207,7 @@ class AtencionEstudianteViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(atencion_clinica_id=atencion_id)
 
         estudiante_id = self.request.query_params.get('estudiante')
-        if estudiante_id and user.role in ['ADMIN', 'DOCENTE']:
+        if estudiante_id and user.role in (User.Role.ADMIN, User.Role.DOCENTE):
             queryset = queryset.filter(estudiante_id=estudiante_id)
 
         return queryset
@@ -231,7 +231,7 @@ class AtencionEstudianteViewSet(viewsets.ModelViewSet):
         user = request.user
 
         # Validar permisos: estudiante solo puede crear como ESTUDIANTE en su propia asignación
-        if user.role == 'ESTUDIANTE':
+        if user.role == User.Role.ESTUDIANTE:
             if data['tipo_autor'] != 'ESTUDIANTE':
                 return Response(
                     {'detail': 'Un estudiante solo puede crear evoluciones de tipo ESTUDIANTE.'},
@@ -289,7 +289,7 @@ class AtencionEstudianteViewSet(viewsets.ModelViewSet):
         user = request.user
 
         # Solo docentes/admin pueden crear viñetas
-        if user.role not in ['ADMIN', 'DOCENTE']:
+        if user.role not in (User.Role.ADMIN, User.Role.DOCENTE):
             return Response(
                 {'detail': 'Solo docentes o administradores pueden crear viñetas.'},
                 status=status.HTTP_403_FORBIDDEN
@@ -344,7 +344,7 @@ class EvolucionViewSet(viewsets.ModelViewSet):
             'creado_por',
         )
 
-        if user.role not in ['ADMIN', 'DOCENTE']:
+        if user.role not in (User.Role.ADMIN, User.Role.DOCENTE):
             queryset = queryset.filter(atencion_estudiante__estudiante=user)
 
         atencion_estudiante_id = self.request.query_params.get('atencion_estudiante')
@@ -382,7 +382,7 @@ class VinetaViewSet(viewsets.ModelViewSet):
             'creada_por',
         )
 
-        if user.role not in ['ADMIN', 'DOCENTE']:
+        if user.role not in (User.Role.ADMIN, User.Role.DOCENTE):
             queryset = queryset.filter(atencion_estudiante__estudiante=user)
 
         atencion_estudiante_id = self.request.query_params.get('atencion_estudiante')

@@ -2,7 +2,7 @@ from rest_framework import viewsets, permissions, filters, status
 from rest_framework.response import Response
 from .models import Paciente
 from .serializers import PacienteSerializer
-from apps.users.permissions import IsDocenteOrAdmin
+from apps.common.permissions import IsDocenteOrAdmin
 
 class PacienteViewSet(viewsets.ModelViewSet):
     queryset = Paciente.objects.all().order_by('apellido', 'nombre')
@@ -23,7 +23,7 @@ class PacienteViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         paciente = self.get_object()
-        total_atenciones = paciente.atenciones_clinicas.count()
+        total_atenciones = paciente.atenciones.count()
         if total_atenciones > 0:
             return Response(
                 {'detail': f'No se puede eliminar el paciente porque tiene {total_atenciones} atención(es) clínica(s). Elimínalas primero.'},
