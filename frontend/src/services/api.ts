@@ -22,7 +22,12 @@ api.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
-    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
+    const url = originalRequest?.url || '';
+
+    // No intentar refresh en endpoints de autenticación
+    const isAuthEndpoint = url.includes('/token/') || url.includes('/token/refresh/');
+
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry && !isAuthEndpoint) {
       originalRequest._retry = true;
       try {
         const refreshToken = localStorage.getItem('refresh_token');
