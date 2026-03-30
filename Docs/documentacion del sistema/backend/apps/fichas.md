@@ -69,11 +69,12 @@ Nota clínica en cadena dentro de una asignación estudiante-atención.
 | `atencion_estudiante` | FK → AtencionEstudiante | Asignación. `on_delete=CASCADE` |
 | `vineta` | FK → Vineta | Viñeta a la que responde (opcional). `on_delete=SET_NULL` |
 | `numero` | PositiveIntegerField | Número secuencial dentro de la asignación |
-| `contenido` | JSONField | Campos clínicos (8 campos por defecto) |
+| `contenido` | JSONField | Campos clínicos (9 campos por defecto) |
 | `tipo_autor` | CharField(20) | `TipoAutor` choices |
 | `nombre_autor` | CharField(255) | Nombre visible del autor (texto libre) |
 | `creado_por` | FK → User | `on_delete=SET_NULL` |
 | `fecha_creacion` | DateTimeField | `auto_now_add` |
+| `entregada` | BooleanField | Si True, bloquea edición por el estudiante (irreversible) |
 
 **Constraint**: `UniqueConstraint(fields=['atencion_estudiante', 'numero'])`.
 **Ordering**: `numero` (ascendente)
@@ -85,6 +86,7 @@ Nota clínica en cadena dentro de una asignación estudiante-atención.
     "anamnesis": "",
     "examen_fisico": "",
     "diagnostico": "",
+    "indicaciones": "",
     "intervenciones": "",
     "factores": "",
     "rau_necesidades": "",
@@ -92,7 +94,7 @@ Nota clínica en cadena dentro de una asignación estudiante-atención.
 }
 ```
 
-**Constante**: `CAMPOS_CLINICOS_DEFAULT` — diccionario con la estructura por defecto del contenido.
+**Constante**: `CAMPOS_CLINICOS_DEFAULT` — diccionario con 9 campos por defecto del contenido clínico.
 
 ### `Vineta`
 Inyección de contexto narrativo del docente para un estudiante específico (individual por asignación).
@@ -120,6 +122,7 @@ Inyección de contexto narrativo del docente para un estudiante específico (ind
 - Campos de solo lectura: `creado_por`, `modificado_por`, `fecha_creacion`, `fecha_modificacion`.
 - Campos anidados: `caso_clinico_detail` (CasoClinicoSerializer), `paciente_detail` (PacienteSerializer).
 - Campos calculados: `creado_por_nombre`, `modificado_por_nombre`, `total_estudiantes`.
+- **Anti-spoiler**: `to_representation()` oculta `titulo`, `descripcion` y `tema` del `caso_clinico_detail` cuando el usuario tiene rol ESTUDIANTE.
 - **En `create()`**: Asigna `creado_por=request.user`.
 - **En `update()`**: Asigna `modificado_por=request.user`.
 
@@ -153,8 +156,10 @@ Inyección de contexto narrativo del docente para un estudiante específico (ind
 - **queryset**: Casos con `select_related` + `annotate(total_atenciones)`.
 - **Permisos**: `IsAuthenticated` para lectura, `IsOwnerOrDocenteOrAdmin` para escritura.
 - **Búsqueda**: `?search=` filtra por titulo y descripcion.
+- **Filtro por tema**: `?tema=` filtra por unidad curricular (iexact).
 - **destroy()**: Retorna HTTP **409 Conflict** si tiene atenciones asociadas.
 - **Acción custom**: `@action(detail=True) atenciones/` — lista paginada de AtencionesClinicas del caso.
+- **Acción custom**: `@action(detail=False) temas/` — retorna lista de temas (únicos) existentes.
 
 ### `AtencionClinicaViewSet`
 - **queryset**: Atenciones con `select_related` + `annotate(total_estudiantes)`.
@@ -180,9 +185,11 @@ Inyección de contexto narrativo del docente para un estudiante específico (ind
 - **Permisos**: `IsOwnerOrDocenteOrAdmin` para `partial_update`.
 
 ### `EvolucionViewSet`
-- **http_method_names**: `['get', 'patch', 'head', 'options']` — solo lectura + actualización parcial.
+- **http_method_names**: `['get', 'post', 'patch', 'head', 'options']` — lectura + creación + actualización parcial.
 - **Filtrado por rol**: Estudiante solo ve sus evoluciones. `?atencion_estudiante=`.
 - **Permisos**: `IsOwnerOrDocenteOrAdmin` para `partial_update`.
+- **partial_update**: Bloquea edición si `entregada=True` para estudiantes (retorna 403).
+- **Acción custom**: `@action(detail=True) entregar/` (POST) — marca evolución como `entregada=True`. Solo el creador puede entregar. Irreversible.
 
 ## Endpoints
 
@@ -195,6 +202,7 @@ Inyección de contexto narrativo del docente para un estudiante específico (ind
 | PUT/PATCH | `/api/fichas/casos-clinicos/{id}/` | Dueño/Docente/Admin | Editar |
 | DELETE | `/api/fichas/casos-clinicos/{id}/` | Dueño/Docente/Admin | Eliminar (409 si tiene atenciones) |
 | GET | `/api/fichas/casos-clinicos/{id}/atenciones/` | Autenticado | Atenciones del caso (paginada) |
+| GET | `/api/fichas/casos-clinicos/temas/` | Autenticado | Lista de temas únicos |
 
 ### Atenciones Clínicas
 | Método | Endpoint | Rol | Descripción |
@@ -230,7 +238,8 @@ Inyección de contexto narrativo del docente para un estudiante específico (ind
 |--------|----------|-----|-------------|
 | GET | `/api/fichas/evoluciones/` | Autenticado | Lista (filtrada por rol, `?atencion_estudiante=`) |
 | GET | `/api/fichas/evoluciones/{id}/` | Autenticado | Detalle |
-| PATCH | `/api/fichas/evoluciones/{id}/` | Dueño/Docente/Admin | Editar contenido |
+| PATCH | `/api/fichas/evoluciones/{id}/` | Dueño/Docente/Admin | Editar contenido (bloqueado si `entregada` para estudiante) |
+| POST | `/api/fichas/evoluciones/{id}/entregar/` | Creador | Marca la evolución como entregada (irreversible) |
 
 ## Relaciones y protección de datos
 

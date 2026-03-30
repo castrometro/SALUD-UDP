@@ -25,13 +25,14 @@ features/fichas/
 ## Tipos (`types.ts`)
 
 ### `ContenidoClinico`
-Interface + constante `CONTENIDO_DEFAULT` que define los 8 campos clínicos del MVP:
+Interface + constante `CONTENIDO_DEFAULT` que define los 9 campos clínicos del MVP:
 ```ts
 interface ContenidoClinico {
     motivo_consulta: string;
     anamnesis: string;
     examen_fisico: string;
     diagnostico: string;
+    indicaciones: string;
     intervenciones: string;
     factores: string;
     rau_necesidades: string;
@@ -67,6 +68,7 @@ Nota clínica en cadena:
 - `contenido` (ContenidoClinico).
 - `tipo_autor` (TipoAutor: 'ESTUDIANTE' | 'DOCENTE'), `nombre_autor`.
 - `vineta` (ID | null) — viñeta a la que responde (opcional).
+- `entregada` (boolean) — si fue entregada, bloquea edición por estudiante.
 - Trazabilidad: `creado_por`/`creado_por_nombre`, `fecha_creacion`.
 
 ### `Vineta`
@@ -81,7 +83,8 @@ Inyección de contexto narrativo del docente:
 ### Casos Clínicos
 | Función | Método | Endpoint |
 |---------|--------|----------|
-| `getCasosClinicos(page, pageSize, search?)` | GET | `/fichas/casos-clinicos/?...` |
+| `getCasosClinicos(page, pageSize, search?, tema?)` | GET | `/fichas/casos-clinicos/?...` |
+| `getTemasCasosClinicos()` | GET | `/fichas/casos-clinicos/temas/` |
 | `getCasoClinico(id)` | GET | `/fichas/casos-clinicos/{id}/` |
 | `createCasoClinico({titulo, tema, descripcion})` | POST | `/fichas/casos-clinicos/` |
 | `updateCasoClinico(id, data)` | PATCH | `/fichas/casos-clinicos/{id}/` |
@@ -115,13 +118,16 @@ Inyección de contexto narrativo del docente:
 | `getEvoluciones(page, pageSize, atencionEstudianteId?)` | GET | `/fichas/evoluciones/?...` |
 | `getEvolucion(id)` | GET | `/fichas/evoluciones/{id}/` |
 | `updateEvolucion(id, {contenido})` | PATCH | `/fichas/evoluciones/{id}/` |
+| `entregarEvolucion(id)` | POST | `/fichas/evoluciones/{id}/entregar/` |
 
 ## Páginas
 
 ### `FichaListPage.tsx`
-Lista de casos clínicos con búsqueda server-side y paginación.
-- **Estado**: `casos[]`, `searchTerm`, `currentPage`, `totalPages`, `totalItems`, `toast`.
+Lista de casos clínicos con búsqueda server-side, paginación y filtro por tema.
+- **Estado**: `casos[]`, `searchTerm`, `currentPage`, `totalPages`, `totalItems`, `temas[]`, `temaSeleccionado`, `toast`.
 - Búsqueda server-side con `?search=` (titulo y descripcion), reseteando a página 1.
+- **3 tarjetas de estadísticas**: Total casos, Total atenciones, Unidades curriculares.
+- **Filtro por tema**: Dropdown de unidades curriculares + chip de filtro activo con botón X para limpiar.
 - Tabla con columnas: Caso Clínico (título+descripción), Atenciones, Fecha.
 - **Acciones** (solo docentes): Ver detalle (link), Editar, Eliminar.
 - **Eliminación**: Muestra Toast con mensaje del backend (409 si tiene atenciones asociadas).
@@ -149,16 +155,17 @@ Crear una atención clínica dentro de un caso.
 Detalle de una atención clínica con estudiantes, viñetas y evoluciones.
 - Muestra info del caso, paciente, fecha.
 - Lista de estudiantes asignados en grid.
-- Modal para asignar nuevo estudiante (por ID).
+- **Buscador de estudiantes**: Autocomplete con debounce por nombre, apellido, email o RUT (reemplaza input numérico de ID).
 - Al seleccionar un estudiante, carga viñetas y evoluciones en paralelo.
-- **Línea de Tiempo**: Muestra viñetas (tarjetas ámbar) y evoluciones (tarjetas con enlace) del estudiante seleccionado.
-- Docentes pueden crear viñetas (formulario inline con textarea) y evoluciones como "Doctor".
+- **Línea de Tiempo**: Muestra viñetas (tarjetas ámbar con badge `creada_por_nombre`) y evoluciones (tarjetas con badge `nombre_autor` y enlace al detalle) del estudiante seleccionado.
+- Docentes pueden crear viñetas (formulario inline con textarea) y evoluciones con campo de **nombre de autor libre** (ej: "Dr. González (Urgenciólogo)").
 - Estudiantes solo crean evoluciones en sus propias asignaciones.
 
 ### `EvolucionPage.tsx`
-Ver/editar una evolución individual con los 8 campos clínicos.
+Ver/editar una evolución individual con los 9 campos clínicos.
 - **Route param**: `id` desde `/evoluciones/:id`.
-- Muestra los 8 campos clínicos en textareas.
+- Muestra los 9 campos clínicos en textareas (incluye Indicaciones).
+- Badge con `nombre_autor` del creador.
 - Toggle editar/ver con permisos (dueño o docente).
 - Guarda via `PATCH /fichas/evoluciones/{id}/`.
 

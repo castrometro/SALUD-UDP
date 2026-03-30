@@ -52,7 +52,7 @@ Provee estado de autenticación a toda la app via React Context.
 
 ### `LoginPage.tsx`
 - Layout full-screen con imagen de fondo y logo.
-- Redirige a `/menu-usuario` tras login exitoso.
+- Redirige por rol tras login: ESTUDIANTE → `/mi-clinica`, DOCENTE/ADMIN → `/casos-clinicos`.
 
 ## Protección de Rutas
 Definida en `App.tsx` con el componente `PrivateRoute`:

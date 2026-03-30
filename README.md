@@ -32,7 +32,7 @@ Vite actúa como punto de entrada único en desarrollo, usando su proxy integrad
 |-----|----------------|
 | `apps/users` | Usuarios, autenticación JWT, roles |
 | `apps/pacientes` | Gestión de pacientes, validación RUT |
-| `apps/fichas` | Fichas clínicas: Casos Clínicos, Atenciones Clínicas, Asignaciones de Estudiantes, Evoluciones |
+| `apps/fichas` | Fichas clínicas: Casos Clínicos, Atenciones Clínicas, Asignaciones de Estudiantes, Viñetas, Evoluciones (con entrega) |
 | `apps/common` | Validadores compartidos (RUT chileno) |
 
 ### Frontend por Features (React)
@@ -41,6 +41,7 @@ Vite actúa como punto de entrada único en desarrollo, usando su proxy integrad
 | `features/auth` | Login, contexto de autenticación, protección de rutas |
 | `features/pacientes` | CRUD de pacientes, detalle con fichas asociadas |
 | `features/fichas` | Casos clínicos, atenciones clínicas, asignaciones de estudiantes, evoluciones |
+| `features/portal-estudiante` | Portal exclusivo para estudiantes: asignaciones, evoluciones, entregas |
 | `features/estudiantes` | Gestión de estudiantes (vista docente/admin) |
 
 ## Stack Tecnológico
@@ -145,7 +146,8 @@ SALUD-UDP/
 │       ├── features/
 │       │   ├── auth/           # Login, AuthContext, protección de rutas
 │       │   ├── pacientes/      # Pages y services de pacientes
-│       │   ├── fichas/         # Pages, components y services de fichas
+│       │   ├── fichas/         # Pages, components y services de fichas (docentes)
+│       │   ├── portal-estudiante/  # Portal del estudiante (asignaciones, evoluciones)
 │       │   └── estudiantes/    # Pages, components y services de estudiantes
 │       └── utils/rut.ts        # Validación de RUT en frontend
 │
@@ -181,5 +183,5 @@ El archivo `.env.example` contiene todos los valores necesarios para desarrollo.
 | Rol | Puede |
 |-----|-------|
 | **ADMIN** | Todo. Acceso a Django Admin. |
-| **DOCENTE** | Crear pacientes, crear casos clínicos (con título, descripción y paciente asociado), ver/editar fichas de estudiantes, ver historial. |
-| **ESTUDIANTE** | Ver pacientes, crear su ficha en un caso clínico, editar sus fichas, ver historial. |
+| **DOCENTE** | Crear pacientes, crear casos clínicos (con título, tema/unidad curricular y descripción), crear atenciones clínicas, asignar estudiantes, crear viñetas y evoluciones como Doctor, filtrar por tema. Redirigido a `/casos-clinicos` al login. |
+| **ESTUDIANTE** | Ver sus asignaciones, crear y editar evoluciones propias, entregar evoluciones (bloqueo irreversible). Redirigido a `/mi-clinica` al login. No ve título/descripción/tema del caso (anti-spoiler). |

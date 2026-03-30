@@ -31,9 +31,10 @@ Browser → localhost:5173 (Vite dev)
 
 | Feature | Rol |
 |---------|-----|
-| `features/auth` | AuthContext, JWT en localStorage, PrivateRoute |
+| `features/auth` | AuthContext, JWT en localStorage, PrivateRoute, redirect por rol al login |
 | `features/pacientes` | CRUD con búsqueda y paginación |
-| `features/fichas` | Casos clínicos, atenciones clínicas, asignaciones de estudiantes, evoluciones |
+| `features/fichas` | Casos clínicos, atenciones clínicas, asignaciones (vista docente/admin) |
+| `features/portal-estudiante` | Portal exclusivo estudiante: asignaciones, evoluciones, entrega |
 | `features/estudiantes` | Gestión de estudiantes (vista docente/admin) |
 
 Detalle de cada módulo en `Docs/documentacion del sistema/`.
@@ -69,7 +70,7 @@ docker compose down -v && docker compose up --build -d
 - `AtencionClinica`: sesión clínica que une caso + paciente + fecha. Constraint único `(caso_clinico, paciente, fecha_atencion)`.
 - `AtencionEstudiante`: asignación de un estudiante a una atención (hecha por docente). Constraint único `(atencion_clinica, estudiante)`.
 - `Vineta`: inyección de contexto narrativo del docente para un estudiante específico. `contenido` TextField, `numero` secuencial. FK a `AtencionEstudiante` (CASCADE). Individual por estudiante.
-- `Evolucion`: nota clínica en cadena. `contenido` es JSONField con 8 campos (`CAMPOS_CLINICOS_DEFAULT`). `tipo_autor` (ESTUDIANTE/DOCENTE), `nombre_autor` (texto libre), `numero` secuencial. FK opcional a `Vineta` (SET_NULL).
+- `Evolucion`: nota clínica en cadena. `contenido` es JSONField con 9 campos (`CAMPOS_CLINICOS_DEFAULT`, incluye `indicaciones`). `tipo_autor` (ESTUDIANTE/DOCENTE), `nombre_autor` (texto libre), `numero` secuencial, `entregada` (bool, bloqueo irreversible de edición para estudiante). FK opcional a `Vineta` (SET_NULL).
 - `Paciente`: incluye perfil clínico: `sexo` (MASCULINO/FEMENINO/OTRO/NO_INFORMA), `antecedentes_personales`, `medicamentos_habituales`, `alergias`.
 - **on_delete=PROTECT**: AtencionClinica→CasoClinico, AtencionClinica→Paciente, AtencionEstudiante→AtencionClinica. ViewSets retornan HTTP 409 antes de que Django lance ProtectedError.
 - **on_delete=CASCADE**: Evolucion→AtencionEstudiante, Vineta→AtencionEstudiante (se borran al quitar asignación).
@@ -78,11 +79,13 @@ docker compose down -v && docker compose up --build -d
 - `ModelViewSet` + `DefaultRouter` (sin namespaces, rutas bajo `/api/fichas/`).
 - **5 ViewSets**: `CasoClinicoViewSet`, `AtencionClinicaViewSet`, `AtencionEstudianteViewSet`, `EvolucionViewSet`, `VinetaViewSet`.
 - **5 routers**: `/fichas/casos-clinicos/`, `/fichas/atenciones-clinicas/`, `/fichas/atenciones-estudiantes/`, `/fichas/evoluciones/`, `/fichas/vinetas/`.
+- Anti-spoiler: `AtencionClinicaSerializer.to_representation()` oculta título/descripción/tema del caso clínico para estudiantes.
+- Filtro por tema: `CasoClinicoViewSet` soporta `?tema=` (iexact) y acción `temas/` que retorna lista de temas únicos.
 - Permisos dinámicos en `get_permissions()`: lectura abierta a autenticados, escritura por rol.
 - Filtrado smart en `get_queryset()`: admin/docente ven todo, estudiante ve solo sus asignaciones/evoluciones.
-- Acciones custom con `@action`: `atenciones` (en CasoClinico), `asignar_estudiante`/`estudiantes` (en AtencionClinica), `crear_evolucion`/`evoluciones`/`crear_vineta`/`vinetas` (en AtencionEstudiante).
+- Acciones custom con `@action`: `atenciones`/`temas` (en CasoClinico), `asignar_estudiante`/`estudiantes` (en AtencionClinica), `crear_evolucion`/`evoluciones`/`crear_vineta`/`vinetas` (en AtencionEstudiante), `entregar` (en Evolucion).
 - Serializers asignan `creado_por`/`modificado_por`/`asignado_por` desde `request.user`.
-- `EvolucionViewSet` es read + patch only (`http_method_names = ['get', 'patch', 'head', 'options']`). Creación via `crear_evolucion` action.
+- `EvolucionViewSet` soporta read + patch + post (`http_method_names = ['get', 'post', 'patch', 'head', 'options']`). Creación via `crear_evolucion` action en AtencionEstudianteViewSet. Acción custom `entregar` (POST) marca evolución como `entregada=True`. `partial_update` bloquea edición si `entregada` para estudiantes.
 - `VinetaViewSet` es read + patch only. Creación via `crear_vineta` action en AtencionEstudianteViewSet (solo docentes).
 - Paginación global: `StandardResultsSetPagination` (PAGE_SIZE=10).
 
@@ -117,7 +120,13 @@ Cada feature sigue: `pages/` + `components/` + `services/` + `types.ts`.
 
 ### Tipado
 - Campos nullable del backend se tipan como `T | null` (no `T?`). Ver Issue #3 para contexto.
-- `ContenidoClinico` usa index signature `[key: string]: string` para acceso dinámico.
+- `ContenidoClinico` usa index signature `[key: string]: string` para acceso dinámico. Incluye 9 campos: motivo_consulta, anamnesis, examen_fisico, diagnostico, indicaciones, intervenciones, factores, rau_necesidades, instrumentos_aplicados.
+
+### Portal Estudiante
+- Feature separada en `features/portal-estudiante` con páginas, servicio y rutas propias (`/mi-clinica/*`).
+- 3 páginas: `MisAsignacionesPage`, `AsignacionDetailPage` (timeline con viñetas + evoluciones), `EvolucionEstudiantePage` (edición + entrega).
+- Login redirige estudiantes a `/mi-clinica`, docentes a `/casos-clinicos`.
+- Entrega per-evolución: botón "Entregar" bloquea edición irreversiblemente para el estudiante.
 
 ## Gotchas
 
@@ -127,3 +136,6 @@ Cada feature sigue: `pages/` + `components/` + `services/` + `types.ts`.
 - **`CORS_ALLOW_ALL_ORIGINS = True`**: solo desarrollo. No usar en producción.
 - **on_delete=PROTECT con 409**: No se puede borrar una entidad con hijos. Los ViewSets de CasoClinico, AtencionClinica y Paciente hacen pre-check y retornan HTTP 409 Conflict con mensaje descriptivo. El frontend muestra el `detail` del backend vía Toast.
 - **Arquitectura actual**: CasoClinico → AtencionClinica → AtencionEstudiante → Vineta / Evolucion. No existe modelo `Plantilla`, `Ficha`, `FichaAmbulatoria`, `FichaEstudiante` ni `FichaVersion`. Los endpoints están bajo `/api/fichas/casos-clinicos/`, `/api/fichas/atenciones-clinicas/`, `/api/fichas/atenciones-estudiantes/`, `/api/fichas/evoluciones/` y `/api/fichas/vinetas/`.
+- **`CAMPOS_CLINICOS_DEFAULT` tiene 9 campos**: Los 8 originales más `indicaciones` (cuidados, concentraciones, administraciones de volumen).
+- **Entrega per-evolución**: Cada evolución tiene campo `entregada` (bool). El estudiante la entrega desde el portal y se bloquea la edición. No es reversible por estudiante.
+- **Anti-spoiler**: El serializer de AtencionClinica oculta título, descripción y tema del caso clínico cuando el usuario es ESTUDIANTE.
