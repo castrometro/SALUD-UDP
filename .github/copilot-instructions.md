@@ -24,7 +24,7 @@ Browser → localhost:5173 (Vite dev)
 |-----|-----|
 | `apps/users` | Auth JWT (email-based), roles ADMIN/DOCENTE/ESTUDIANTE |
 | `apps/pacientes` | CRUD pacientes, validación RUT chileno |
-| `apps/fichas` | CasosClinicos (entidad central), FichasEstudiantes, versionamiento, JSONField flexible |
+| `apps/fichas` | CasoClinico (escenario genérico), AtencionClinica (caso+paciente+fecha), AtencionEstudiante (asignación), Vineta (inyección narrativa), Evolucion (notas clínicas) |
 | `apps/common` | Validadores compartidos (`validate_rut`, `format_rut`) |
 
 ### Frontend — Feature-based React
@@ -33,7 +33,7 @@ Browser → localhost:5173 (Vite dev)
 |---------|-----|
 | `features/auth` | AuthContext, JWT en localStorage, PrivateRoute |
 | `features/pacientes` | CRUD con búsqueda y paginación |
-| `features/fichas` | Casos clínicos, fichas de estudiante, historial de versiones |
+| `features/fichas` | Casos clínicos, atenciones clínicas, asignaciones de estudiantes, evoluciones |
 | `features/estudiantes` | Gestión de estudiantes (vista docente/admin) |
 
 Detalle de cada módulo en `Docs/documentacion del sistema/`.
@@ -64,21 +64,26 @@ docker compose down -v && docker compose up --build -d
 - Roles via `TextChoices`: `ADMIN`, `DOCENTE`, `ESTUDIANTE`.
 - RUT se auto-formatea en `save()` usando `format_rut()` de `apps/common/validators`.
 - `validate_rut()` está **deshabilitada para MVP** (permite RUTs ficticios como SIM-001).
-- Fichas usan arquitectura de **2 modelos principales**: `CasoClinico` → `FichaEstudiante` + `FichaVersion` para versionamiento.
-- `CasoClinico`: entidad central con título, descripción narrativa, paciente asociado. Creada por docentes.
-- `FichaEstudiante`: ficha individual del estudiante en un caso. Constraint único `(caso_clinico, estudiante)`. Contenido JSON arranca vacío (`CAMPOS_CLINICOS_DEFAULT`).
-- `contenido` es un `JSONField` con 8 campos clínicos predefinidos en `CAMPOS_CLINICOS_DEFAULT`.
-- `FichaVersion` guarda snapshots automáticos al editar FichaEstudiante (creados en `serializer.update()`).
-- **on_delete=PROTECT**: CasoClinico→Paciente, FichaEstudiante→CasoClinico. ViewSets retornan HTTP 409 antes de que Django lance ProtectedError.
+- Fichas usan arquitectura de **5 modelos principales**: `CasoClinico` → `AtencionClinica` → `AtencionEstudiante` → `Vineta` / `Evolucion`.
+- `CasoClinico`: escenario genérico reutilizable con título, tema (unidad temática) y descripción. **Sin FK a Paciente**. Creado por docentes.
+- `AtencionClinica`: sesión clínica que une caso + paciente + fecha. Constraint único `(caso_clinico, paciente, fecha_atencion)`.
+- `AtencionEstudiante`: asignación de un estudiante a una atención (hecha por docente). Constraint único `(atencion_clinica, estudiante)`.
+- `Vineta`: inyección de contexto narrativo del docente para un estudiante específico. `contenido` TextField, `numero` secuencial. FK a `AtencionEstudiante` (CASCADE). Individual por estudiante.
+- `Evolucion`: nota clínica en cadena. `contenido` es JSONField con 8 campos (`CAMPOS_CLINICOS_DEFAULT`). `tipo_autor` (ESTUDIANTE/DOCENTE), `nombre_autor` (texto libre), `numero` secuencial. FK opcional a `Vineta` (SET_NULL).
+- `Paciente`: incluye perfil clínico: `sexo` (MASCULINO/FEMENINO/OTRO/NO_INFORMA), `antecedentes_personales`, `medicamentos_habituales`, `alergias`.
+- **on_delete=PROTECT**: AtencionClinica→CasoClinico, AtencionClinica→Paciente, AtencionEstudiante→AtencionClinica. ViewSets retornan HTTP 409 antes de que Django lance ProtectedError.
+- **on_delete=CASCADE**: Evolucion→AtencionEstudiante, Vineta→AtencionEstudiante (se borran al quitar asignación).
 
 ### Views/Serializers
 - `ModelViewSet` + `DefaultRouter` (sin namespaces, rutas bajo `/api/fichas/`).
-- **2 ViewSets**: `CasoClinicoViewSet`, `FichaEstudianteViewSet`.
-- **2 routers**: `/fichas/casos-clinicos/`, `/fichas/fichas-estudiantes/`.
+- **5 ViewSets**: `CasoClinicoViewSet`, `AtencionClinicaViewSet`, `AtencionEstudianteViewSet`, `EvolucionViewSet`, `VinetaViewSet`.
+- **5 routers**: `/fichas/casos-clinicos/`, `/fichas/atenciones-clinicas/`, `/fichas/atenciones-estudiantes/`, `/fichas/evoluciones/`, `/fichas/vinetas/`.
 - Permisos dinámicos en `get_permissions()`: lectura abierta a autenticados, escritura por rol.
-- Filtrado smart en `get_queryset()`: admin/docente ven todo, estudiante ve solo sus fichas.
-- Acciones custom con `@action`: `crear_mi_ficha`, `historial`, `fichas_estudiantes`, `mi_ficha`.
-- Serializers asignan `creado_por`/`modificado_por` desde `request.user`.
+- Filtrado smart en `get_queryset()`: admin/docente ven todo, estudiante ve solo sus asignaciones/evoluciones.
+- Acciones custom con `@action`: `atenciones` (en CasoClinico), `asignar_estudiante`/`estudiantes` (en AtencionClinica), `crear_evolucion`/`evoluciones`/`crear_vineta`/`vinetas` (en AtencionEstudiante).
+- Serializers asignan `creado_por`/`modificado_por`/`asignado_por` desde `request.user`.
+- `EvolucionViewSet` es read + patch only (`http_method_names = ['get', 'patch', 'head', 'options']`). Creación via `crear_evolucion` action.
+- `VinetaViewSet` es read + patch only. Creación via `crear_vineta` action en AtencionEstudianteViewSet (solo docentes).
 - Paginación global: `StandardResultsSetPagination` (PAGE_SIZE=10).
 
 ### Testing
@@ -120,5 +125,5 @@ Cada feature sigue: `pages/` + `components/` + `services/` + `types.ts`.
 - **Token refresh hardcodeado**: `api.ts` usa ruta relativa `/api/token/refresh/` — funciona solo con proxy de Vite o Nginx.
 - **Compose no expone MySQL**: puerto 3306 no mapeado al host. Para desarrollo local sin Docker, cambiar `DB_HOST=localhost` y mapear puerto.
 - **`CORS_ALLOW_ALL_ORIGINS = True`**: solo desarrollo. No usar en producción.
-- **on_delete=PROTECT con 409**: No se puede borrar una entidad con hijos. Los ViewSets de CasoClinico y Paciente hacen pre-check y retornan HTTP 409 Conflict con mensaje descriptivo. El frontend muestra el `detail` del backend vía Toast.
-- **Arquitectura actual**: CasoClinico → FichaEstudiante → FichaVersion. No existe modelo `Plantilla`, `Ficha` ni `FichaAmbulatoria`. Los endpoints están bajo `/api/fichas/casos-clinicos/` y `/api/fichas/fichas-estudiantes/`.
+- **on_delete=PROTECT con 409**: No se puede borrar una entidad con hijos. Los ViewSets de CasoClinico, AtencionClinica y Paciente hacen pre-check y retornan HTTP 409 Conflict con mensaje descriptivo. El frontend muestra el `detail` del backend vía Toast.
+- **Arquitectura actual**: CasoClinico → AtencionClinica → AtencionEstudiante → Vineta / Evolucion. No existe modelo `Plantilla`, `Ficha`, `FichaAmbulatoria`, `FichaEstudiante` ni `FichaVersion`. Los endpoints están bajo `/api/fichas/casos-clinicos/`, `/api/fichas/atenciones-clinicas/`, `/api/fichas/atenciones-estudiantes/`, `/api/fichas/evoluciones/` y `/api/fichas/vinetas/`.

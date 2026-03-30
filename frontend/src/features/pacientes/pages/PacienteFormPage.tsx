@@ -14,11 +14,15 @@ const PacienteFormPage = () => {
         rut: '',
         nombre: '',
         apellido: '',
+        sexo: 'NO_INFORMA',
         prevision: '',
         correo: '',
         numero_telefono: '',
         fecha_nacimiento: '',
         domicilio: '',
+        antecedentes_personales: '',
+        medicamentos_habituales: '',
+        alergias: '',
     });
 
     useEffect(() => {
@@ -36,7 +40,7 @@ const PacienteFormPage = () => {
         }
     };
 
-    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
         const { name, value } = e.target;
         if (name === 'rut') {
             setFormData(prev => ({ ...prev, [name]: formatRut(value) }));
@@ -144,6 +148,23 @@ const PacienteFormPage = () => {
                     </div>
 
                     <div className="sm:col-span-3">
+                        <label htmlFor="sexo" className="block text-sm font-medium text-gray-700">Sexo</label>
+                        <select
+                            name="sexo"
+                            id="sexo"
+                            required
+                            value={formData.sexo}
+                            onChange={handleChange}
+                            className="mt-1 block w-full py-2 px-3 border border-gray-300 bg-white rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                        >
+                            <option value="MASCULINO">Masculino</option>
+                            <option value="FEMENINO">Femenino</option>
+                            <option value="OTRO">Otro</option>
+                            <option value="NO_INFORMA">No informa</option>
+                        </select>
+                    </div>
+
+                    <div className="sm:col-span-3">
                         <label htmlFor="numero_telefono" className="block text-sm font-medium text-gray-700">Teléfono</label>
                         <input
                             type="text"
@@ -177,6 +198,49 @@ const PacienteFormPage = () => {
                             onChange={handleChange}
                             className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
                         />
+                    </div>
+                </div>
+
+                {/* Perfil Clínico */}
+                <div className="border-t border-gray-200 pt-6">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">Perfil Clínico</h3>
+                    <div className="space-y-4">
+                        <div>
+                            <label htmlFor="antecedentes_personales" className="block text-sm font-medium text-gray-700">Antecedentes Personales</label>
+                            <textarea
+                                name="antecedentes_personales"
+                                id="antecedentes_personales"
+                                rows={3}
+                                value={formData.antecedentes_personales}
+                                onChange={handleChange}
+                                placeholder="Ej: DM2 hace 10 años, HTA, dislipidemia..."
+                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="medicamentos_habituales" className="block text-sm font-medium text-gray-700">Medicamentos Habituales</label>
+                            <textarea
+                                name="medicamentos_habituales"
+                                id="medicamentos_habituales"
+                                rows={3}
+                                value={formData.medicamentos_habituales}
+                                onChange={handleChange}
+                                placeholder="Ej: Metformina 850mg c/12h, Losartán 50mg/día..."
+                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                            />
+                        </div>
+                        <div>
+                            <label htmlFor="alergias" className="block text-sm font-medium text-gray-700">Alergias</label>
+                            <textarea
+                                name="alergias"
+                                id="alergias"
+                                rows={2}
+                                value={formData.alergias}
+                                onChange={handleChange}
+                                placeholder="Ej: Penicilina, sulfas, AINES..."
+                                className="mt-1 focus:ring-indigo-500 focus:border-indigo-500 block w-full shadow-sm sm:text-sm border-gray-300 rounded-md"
+                            />
+                        </div>
                     </div>
                 </div>
 

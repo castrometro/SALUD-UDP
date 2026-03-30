@@ -32,7 +32,7 @@ Vite actúa como punto de entrada único en desarrollo, usando su proxy integrad
 |-----|----------------|
 | `apps/users` | Usuarios, autenticación JWT, roles |
 | `apps/pacientes` | Gestión de pacientes, validación RUT |
-| `apps/fichas` | Fichas clínicas: Casos Clínicos (entidad central), Fichas de Estudiantes, historial de versiones |
+| `apps/fichas` | Fichas clínicas: Casos Clínicos, Atenciones Clínicas, Asignaciones de Estudiantes, Evoluciones |
 | `apps/common` | Validadores compartidos (RUT chileno) |
 
 ### Frontend por Features (React)
@@ -40,7 +40,7 @@ Vite actúa como punto de entrada único en desarrollo, usando su proxy integrad
 |---------|----------------|
 | `features/auth` | Login, contexto de autenticación, protección de rutas |
 | `features/pacientes` | CRUD de pacientes, detalle con fichas asociadas |
-| `features/fichas` | Casos clínicos, fichas de estudiante, historial de versiones |
+| `features/fichas` | Casos clínicos, atenciones clínicas, asignaciones de estudiantes, evoluciones |
 | `features/estudiantes` | Gestión de estudiantes (vista docente/admin) |
 
 ## Stack Tecnológico

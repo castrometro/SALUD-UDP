@@ -20,3 +20,23 @@ class TestPacienteModel:
         birth_date_tomorrow = today.replace(year=today.year - 20) + datetime.timedelta(days=1)
         paciente_joven = PacienteFactory(fecha_nacimiento=birth_date_tomorrow)
         assert paciente_joven.edad == 19
+
+    def test_campos_clinicos_paciente(self):
+        """El paciente puede tener sexo, antecedentes, medicamentos y alergias"""
+        paciente = PacienteFactory(
+            sexo='FEMENINO',
+            antecedentes_personales='DM2, HTA',
+            medicamentos_habituales='Metformina 850mg',
+            alergias='Penicilina',
+        )
+        assert paciente.sexo == 'FEMENINO'
+        assert paciente.antecedentes_personales == 'DM2, HTA'
+        assert paciente.medicamentos_habituales == 'Metformina 850mg'
+        assert paciente.alergias == 'Penicilina'
+
+    def test_campos_clinicos_opcionales(self):
+        """Los campos clínicos son opcionales (blank por defecto)"""
+        paciente = PacienteFactory()
+        assert paciente.antecedentes_personales == ''
+        assert paciente.medicamentos_habituales == ''
+        assert paciente.alergias == ''
