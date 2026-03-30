@@ -59,6 +59,17 @@ class AtencionClinicaSerializer(serializers.ModelSerializer):
             return obj.total_estudiantes
         return obj.asignaciones.count()
 
+    def to_representation(self, instance):
+        data = super().to_representation(instance)
+        request = self.context.get('request')
+        if request and hasattr(request, 'user') and request.user.role == 'ESTUDIANTE':
+            # Ocultar spoilers del caso clínico al estudiante
+            if data.get('caso_clinico_detail'):
+                data['caso_clinico_detail'].pop('titulo', None)
+                data['caso_clinico_detail'].pop('descripcion', None)
+                data['caso_clinico_detail'].pop('tema', None)
+        return data
+
     def create(self, validated_data):
         request = self.context.get('request')
         if request and hasattr(request, 'user'):

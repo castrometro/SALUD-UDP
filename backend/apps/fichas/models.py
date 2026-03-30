@@ -9,6 +9,7 @@ CAMPOS_CLINICOS_DEFAULT = {
     'anamnesis': '',
     'examen_fisico': '',
     'diagnostico': '',
+    'indicaciones': '',
     'intervenciones': '',
     'factores': '',
     'rau_necesidades': '',
@@ -188,6 +189,10 @@ class Evolucion(models.Model):
         null=True, related_name="evoluciones_creadas"
     )
     fecha_creacion = models.DateTimeField(auto_now_add=True)
+    entregada = models.BooleanField(
+        default=False,
+        help_text="Si True, esta evolución fue entregada y no puede ser editada por el estudiante"
+    )
 
     class Meta:
         verbose_name = "Evolución"

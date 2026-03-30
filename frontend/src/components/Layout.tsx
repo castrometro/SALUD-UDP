@@ -4,7 +4,7 @@ import Header from './Header';
 import Footer from './Footer';
 
 const Layout = () => {
-    const { logout } = useAuth();
+    const { logout, isEstudiante } = useAuth();
     const navigate = useNavigate();
 
     const handleLogout = () => {
@@ -12,10 +12,13 @@ const Layout = () => {
         navigate('/login');
     };
 
+    const menuLink = isEstudiante ? '/mi-clinica' : '/menu-usuario';
+    const menuLabel = isEstudiante ? 'Mi Clínica' : 'Menu Usuario';
+
     const headerProps = {
         logoSrc: "/images/FacsyoLogo.png",
         logoAlt: "UDP Logo",
-        menuItems: [{ text: "Inicio", link: "/" }, { text: "Menu Usuario", link: "/menu-usuario" }],
+        menuItems: [{ text: "Inicio", link: "/" }, { text: menuLabel, link: menuLink }],
         circleButton: {
             text: "Cerrar Sesión",
             onClick: handleLogout,

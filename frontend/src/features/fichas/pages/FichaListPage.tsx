@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { CasoClinico } from '../types';
-import { getCasosClinicos, deleteCasoClinico } from '../services/fichaService';
-import { Search, Plus, Eye, Trash2, Pencil, BookOpen, Stethoscope } from 'lucide-react';
+import { getCasosClinicos, deleteCasoClinico, getTemasCasosClinicos } from '../services/fichaService';
+import { Search, Plus, Eye, Trash2, Pencil, BookOpen, Stethoscope, Filter, X } from 'lucide-react';
 import Pagination from '@/components/ui/Pagination';
 import Toast from '@/components/ui/Toast';
 import { useAuth } from '@/features/auth/context/AuthContext';
@@ -12,6 +12,8 @@ const FichaListPage = () => {
     const [casos, setCasos] = useState<CasoClinico[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [selectedTema, setSelectedTema] = useState('');
+    const [temas, setTemas] = useState<string[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [totalPages, setTotalPages] = useState(0);
     const [totalItems, setTotalItems] = useState(0);
@@ -22,7 +24,11 @@ const FichaListPage = () => {
 
     useEffect(() => {
         loadCasos();
-    }, [currentPage]);
+    }, [currentPage, selectedTema]);
+
+    useEffect(() => {
+        getTemasCasosClinicos().then(setTemas).catch(console.error);
+    }, []);
 
     useEffect(() => {
         const timeoutId = setTimeout(() => {
@@ -38,7 +44,7 @@ const FichaListPage = () => {
     const loadCasos = async () => {
         try {
             setLoading(true);
-            const data = await getCasosClinicos(currentPage, itemsPerPage, searchTerm || undefined);
+            const data = await getCasosClinicos(currentPage, itemsPerPage, searchTerm || undefined, selectedTema || undefined);
             setCasos(data.results);
             setTotalPages(Math.ceil(data.count / itemsPerPage));
             setTotalItems(data.count);
@@ -91,8 +97,8 @@ const FichaListPage = () => {
                 </div>
 
                 {/* Resumen rápido */}
-                {!loading && casos.length > 0 && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+                {!loading && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
                         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
                             <p className="text-sm text-gray-500 font-worksans">Total casos clínicos</p>
                             <p className="text-2xl font-arizona font-medium text-gray-900">{totalItems}</p>
@@ -103,23 +109,57 @@ const FichaListPage = () => {
                                 {casos.reduce((acc, c) => acc + (c.total_atenciones || 0), 0)}
                             </p>
                         </div>
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                            <p className="text-sm text-gray-500 font-worksans">Unidades curriculares</p>
+                            <p className="text-2xl font-arizona font-medium text-gray-900">{temas.length}</p>
+                        </div>
                     </div>
                 )}
 
-                {/* Search Bar */}
-                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6">
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <Search className="h-5 w-5 text-gray-400" />
+                {/* Filtros */}
+                <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mb-6 space-y-3">
+                    <div className="flex flex-col sm:flex-row gap-3">
+                        <div className="relative flex-1">
+                            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <Search className="h-5 w-5 text-gray-400" />
+                            </div>
+                            <input
+                                type="text"
+                                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-aqua focus:border-aqua sm:text-sm transition duration-150 ease-in-out"
+                                placeholder="Buscar por título o descripción..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                            />
                         </div>
-                        <input
-                            type="text"
-                            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-aqua focus:border-aqua sm:text-sm transition duration-150 ease-in-out"
-                            placeholder="Buscar por título o descripción..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
+                        {temas.length > 0 && (
+                            <div className="relative sm:w-64">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Filter className="h-4 w-4 text-gray-400" />
+                                </div>
+                                <select
+                                    value={selectedTema}
+                                    onChange={(e) => { setSelectedTema(e.target.value); setCurrentPage(1); }}
+                                    className="block w-full pl-9 pr-8 py-2 border border-gray-300 rounded-lg bg-white text-sm focus:outline-none focus:ring-1 focus:ring-aqua focus:border-aqua font-worksans appearance-none"
+                                >
+                                    <option value="">Todas las unidades</option>
+                                    {temas.map((t) => (
+                                        <option key={t} value={t}>{t}</option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
                     </div>
+                    {selectedTema && (
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-gray-500 font-worksans">Filtro activo:</span>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 text-xs font-semibold font-worksans">
+                                {selectedTema}
+                                <button onClick={() => { setSelectedTema(''); setCurrentPage(1); }} className="ml-0.5 hover:text-indigo-900">
+                                    <X className="w-3 h-3" />
+                                </button>
+                            </span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Table Section */}

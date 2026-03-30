@@ -5,6 +5,7 @@ export interface ContenidoClinico {
     anamnesis: string;
     examen_fisico: string;
     diagnostico: string;
+    indicaciones: string;
     intervenciones: string;
     factores: string;
     rau_necesidades: string;
@@ -17,6 +18,7 @@ export const CONTENIDO_DEFAULT: ContenidoClinico = {
     anamnesis: '',
     examen_fisico: '',
     diagnostico: '',
+    indicaciones: '',
     intervenciones: '',
     factores: '',
     rau_necesidades: '',
@@ -98,6 +100,7 @@ export interface Evolucion {
     creado_por: number | null;
     creado_por_nombre: string | null;
     fecha_creacion: string;
+    entregada: boolean;
 }
 
 // ──────────────────────────────────────────────

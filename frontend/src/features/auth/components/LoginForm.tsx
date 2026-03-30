@@ -1,9 +1,10 @@
 import { useState, type FormEvent } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { User } from '../types';
 
 interface LoginProps {
-    onSuccess: () => void;
+    onSuccess: (user: User) => void;
 }
 
 export default function LoginForm({ onSuccess }: LoginProps) {
@@ -18,8 +19,8 @@ export default function LoginForm({ onSuccess }: LoginProps) {
         setErrorMessage('');
 
         try {
-            await login(email, password);
-            onSuccess();
+            const user = await login(email, password);
+            onSuccess(user);
         } catch (error) {
             setErrorMessage('Credenciales inválidas o error en el servidor');
         }

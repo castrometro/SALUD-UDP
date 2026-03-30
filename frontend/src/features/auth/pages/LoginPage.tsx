@@ -2,12 +2,17 @@ import { useNavigate } from 'react-router-dom';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import LoginForm from '../components/LoginForm';
+import { User } from '../types';
 
 export default function LoginPage() {
   const navigate = useNavigate();
 
-  const handleSuccess = () => {
-    navigate('/menu-usuario'); // Redirect to menu-usuario after login
+  const handleSuccess = (user: User) => {
+    if (user.role === 'ESTUDIANTE') {
+      navigate('/mi-clinica');
+    } else {
+      navigate('/menu-usuario');
+    }
   };
 
   const headerProps = {

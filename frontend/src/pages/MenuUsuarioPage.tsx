@@ -1,23 +1,24 @@
 import { AdminCard } from '../components/AdminCard';
 import { useAuth } from '../features/auth/context/AuthContext';
+import { Navigate } from 'react-router-dom';
 
 export default function MenuUsuarioPage() {
   const { user } = useAuth();
 
-  const cards = [];
   const isAdmin = user?.role === 'ADMIN';
   const isDocente = user?.role === 'DOCENTE';
   const isEstudiante = user?.role === 'ESTUDIANTE';
 
-  if (isAdmin || isDocente || isEstudiante) {
+  // Estudiante va siempre a /mi-clinica
+  if (isEstudiante) {
+    return <Navigate to="/mi-clinica" replace />;
+  }
+
+  const cards = [];
+
+  if (isAdmin || isDocente) {
     cards.push({ title: "Gestión de Pacientes", link: "/pacientes" });
-  }
-
-  if (isAdmin || isDocente) {
     cards.push({ title: "Gestión de Estudiantes", link: "/estudiantes" });
-  }
-
-  if (isAdmin || isDocente) {
     cards.push({ title: "Casos Clínicos", link: "/casos-clinicos" });
   }
 

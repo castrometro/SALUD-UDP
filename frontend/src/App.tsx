@@ -16,6 +16,10 @@ import EvolucionPage from './features/fichas/pages/EvolucionPage';
 import EstudianteListPage from './features/estudiantes/pages/EstudianteListPage';
 import EstudianteDetailPage from './features/estudiantes/pages/EstudianteDetailPage';
 import EstudianteFormPage from './features/estudiantes/pages/EstudianteFormPage';
+// Portal Estudiante
+import MisAsignacionesPage from './features/portal-estudiante/pages/MisAsignacionesPage';
+import EstAsignacionDetailPage from './features/portal-estudiante/pages/AsignacionDetailPage';
+import EvolucionEstudiantePage from './features/portal-estudiante/pages/EvolucionEstudiantePage';
 
 const PrivateRoute = ({ children }: { children: JSX.Element }) => {
     const { isAuthenticated, isLoading } = useAuth();
@@ -57,6 +61,11 @@ function App() {
                         <Route path="casos-clinicos/:casoId/nueva-atencion" element={<AtencionFormPage />} />
                         <Route path="atenciones/:id" element={<AtencionDetailPage />} />
                         <Route path="evoluciones/:id" element={<EvolucionPage />} />
+
+                        {/* Portal Estudiante */}
+                        <Route path="mi-clinica" element={<MisAsignacionesPage />} />
+                        <Route path="mi-clinica/asignacion/:id" element={<EstAsignacionDetailPage />} />
+                        <Route path="mi-clinica/evolucion/:id" element={<EvolucionEstudiantePage />} />
 
                         {/* Estudiantes */}
                         <Route path="estudiantes" element={<EstudianteListPage />} />

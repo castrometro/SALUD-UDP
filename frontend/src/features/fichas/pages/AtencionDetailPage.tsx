@@ -1,6 +1,6 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ChevronLeft, AlertCircle, Users, Plus, Stethoscope, FileText, MessageSquare } from 'lucide-react';
+import { ChevronLeft, AlertCircle, Users, Plus, Stethoscope, FileText, MessageSquare, Search } from 'lucide-react';
 import { AtencionClinica, AtencionEstudiante, Evolucion, Vineta } from '../types';
 import {
     getAtencionClinica, asignarEstudiante,
@@ -10,6 +10,8 @@ import {
 import { useAuth } from '../../auth/context/AuthContext';
 import { formatRut } from '@/utils/rut';
 import Toast from '@/components/ui/Toast';
+import { getEstudiantes } from '@/features/estudiantes/services/estudianteService';
+import { Estudiante } from '@/features/estudiantes/types';
 
 const AtencionDetailPage = () => {
     const { id } = useParams<{ id: string }>();
@@ -24,8 +26,12 @@ const AtencionDetailPage = () => {
 
     // Asignar estudiante form
     const [showAsignarForm, setShowAsignarForm] = useState(false);
-    const [estudianteEmail, setEstudianteEmail] = useState('');
+    const [busquedaEstudiante, setBusquedaEstudiante] = useState('');
+    const [resultadosEstudiante, setResultadosEstudiante] = useState<Estudiante[]>([]);
+    const [buscandoEstudiante, setBuscandoEstudiante] = useState(false);
+    const [selectedEstudiante, setSelectedEstudiante] = useState<Estudiante | null>(null);
     const [asignando, setAsignando] = useState(false);
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     // Evoluciones de la asignación seleccionada
     const [selectedAsignacion, setSelectedAsignacion] = useState<AtencionEstudiante | null>(null);
@@ -36,6 +42,10 @@ const AtencionDetailPage = () => {
     // Crear viñeta
     const [showVinetaForm, setShowVinetaForm] = useState(false);
     const [vinetaContenido, setVinetaContenido] = useState('');
+
+    // Crear evolución docente (con autor personalizable)
+    const [showEvolucionForm, setShowEvolucionForm] = useState(false);
+    const [evolucionAutor, setEvolucionAutor] = useState('');
 
     const isDocente = user?.role === 'ADMIN' || user?.role === 'DOCENTE';
     const isEstudiante = user?.role === 'ESTUDIANTE';
@@ -70,19 +80,37 @@ const AtencionDetailPage = () => {
         }
     };
 
+    const handleBuscarEstudiante = (query: string) => {
+        setBusquedaEstudiante(query);
+        setSelectedEstudiante(null);
+        if (debounceRef.current) clearTimeout(debounceRef.current);
+        if (query.trim().length < 2) {
+            setResultadosEstudiante([]);
+            return;
+        }
+        debounceRef.current = setTimeout(async () => {
+            setBuscandoEstudiante(true);
+            try {
+                const data = await getEstudiantes(1, query.trim());
+                setResultadosEstudiante(data.results);
+            } catch {
+                setResultadosEstudiante([]);
+            } finally {
+                setBuscandoEstudiante(false);
+            }
+        }, 400);
+    };
+
     const handleAsignarEstudiante = async (e: FormEvent) => {
         e.preventDefault();
-        if (!id || !estudianteEmail.trim()) return;
+        if (!id || !selectedEstudiante) return;
         setAsignando(true);
         try {
-            const estudianteId = parseInt(estudianteEmail.trim());
-            if (isNaN(estudianteId)) {
-                setToast({ message: 'Ingresa un ID de estudiante válido', type: 'error' });
-                return;
-            }
-            await asignarEstudiante(parseInt(id), estudianteId);
+            await asignarEstudiante(parseInt(id), selectedEstudiante.id);
             setToast({ message: 'Estudiante asignado exitosamente', type: 'success' });
-            setEstudianteEmail('');
+            setBusquedaEstudiante('');
+            setSelectedEstudiante(null);
+            setResultadosEstudiante([]);
             setShowAsignarForm(false);
             loadAsignaciones(parseInt(id));
         } catch (error: unknown) {
@@ -111,12 +139,18 @@ const AtencionDetailPage = () => {
         }
     };
 
-    const handleCrearEvolucion = async () => {
+    const handleCrearEvolucion = async (nombreAutor?: string) => {
         if (!selectedAsignacion) return;
         try {
             const tipoAutor = isEstudiante ? 'ESTUDIANTE' : 'DOCENTE';
-            await crearEvolucion(selectedAsignacion.id, { tipo_autor: tipoAutor });
+            const payload: { tipo_autor: string; nombre_autor?: string } = { tipo_autor: tipoAutor };
+            if (nombreAutor?.trim()) {
+                payload.nombre_autor = nombreAutor.trim();
+            }
+            await crearEvolucion(selectedAsignacion.id, payload);
             setToast({ message: 'Evolución creada exitosamente', type: 'success' });
+            setShowEvolucionForm(false);
+            setEvolucionAutor('');
             const data = await getEvolucionesDeAsignacion(selectedAsignacion.id);
             setEvoluciones(data);
         } catch (error: unknown) {
@@ -256,24 +290,62 @@ const AtencionDetailPage = () => {
                     {/* Assign form */}
                     {showAsignarForm && isDocente && (
                         <form onSubmit={handleAsignarEstudiante} className="mb-6 p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <label className="block text-sm font-medium text-gray-700 mb-1 font-worksans">ID del Estudiante</label>
-                            <div className="flex gap-2">
-                                <input
-                                    type="number"
-                                    value={estudianteEmail}
-                                    onChange={(e) => setEstudianteEmail(e.target.value)}
-                                    className="flex-1 border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-aqua focus:border-aqua"
-                                    placeholder="ID del estudiante"
-                                    required
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={asignando}
-                                    className={`px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-worksans text-sm ${asignando ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                >
-                                    {asignando ? 'Asignando...' : 'Asignar'}
-                                </button>
+                            <label className="block text-sm font-medium text-gray-700 mb-1 font-worksans">Buscar Estudiante</label>
+                            <div className="relative">
+                                <div className="flex items-center border border-gray-300 rounded-md focus-within:ring-2 focus-within:ring-aqua focus-within:border-aqua">
+                                    <Search className="w-4 h-4 text-gray-400 ml-3" />
+                                    <input
+                                        type="text"
+                                        value={busquedaEstudiante}
+                                        onChange={(e) => handleBuscarEstudiante(e.target.value)}
+                                        className="flex-1 px-3 py-2 text-sm border-0 focus:ring-0 focus:outline-none rounded-md"
+                                        placeholder="Nombre, apellido, RUT o email..."
+                                        autoComplete="off"
+                                    />
+                                    {buscandoEstudiante && (
+                                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-aqua mr-3"></div>
+                                    )}
+                                </div>
+                                {/* Resultados de búsqueda */}
+                                {resultadosEstudiante.length > 0 && !selectedEstudiante && (
+                                    <ul className="absolute z-10 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-48 overflow-y-auto">
+                                        {resultadosEstudiante.map((est) => (
+                                            <li key={est.id}>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => {
+                                                        setSelectedEstudiante(est);
+                                                        setBusquedaEstudiante(`${est.first_name} ${est.last_name} (${formatRut(est.rut)})`);
+                                                        setResultadosEstudiante([]);
+                                                    }}
+                                                    className="w-full text-left px-4 py-2 hover:bg-blue-50 text-sm font-worksans flex justify-between items-center"
+                                                >
+                                                    <span className="font-medium">{est.first_name} {est.last_name}</span>
+                                                    <span className="text-gray-500 text-xs">{formatRut(est.rut)}</span>
+                                                </button>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                )}
+                                {busquedaEstudiante.trim().length >= 2 && !buscandoEstudiante && resultadosEstudiante.length === 0 && !selectedEstudiante && (
+                                    <p className="text-xs text-gray-500 mt-1 font-worksans">Sin resultados para "{busquedaEstudiante}"</p>
+                                )}
                             </div>
+                            {selectedEstudiante && (
+                                <div className="flex items-center justify-between mt-3 p-2 bg-blue-50 rounded border border-blue-200">
+                                    <span className="text-sm font-worksans">
+                                        <span className="font-medium">{selectedEstudiante.first_name} {selectedEstudiante.last_name}</span>
+                                        {' · '}{formatRut(selectedEstudiante.rut)} · {selectedEstudiante.email}
+                                    </span>
+                                    <button
+                                        type="submit"
+                                        disabled={asignando}
+                                        className={`px-4 py-1.5 bg-green-500 text-white rounded-md hover:bg-green-600 font-worksans text-sm ${asignando ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                    >
+                                        {asignando ? 'Asignando...' : 'Asignar'}
+                                    </button>
+                                </div>
+                            )}
                         </form>
                     )}
 
@@ -338,7 +410,13 @@ const AtencionDetailPage = () => {
                                 )}
                                 {(isDocente || (isEstudiante && selectedAsignacion.estudiante === user?.id)) && (
                                     <button
-                                        onClick={handleCrearEvolucion}
+                                        onClick={() => {
+                                            if (isDocente) {
+                                                setShowEvolucionForm(!showEvolucionForm);
+                                            } else {
+                                                handleCrearEvolucion();
+                                            }
+                                        }}
                                         className="inline-flex items-center px-3 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 font-worksans text-sm font-medium"
                                     >
                                         <Plus className="w-4 h-4 mr-1" />
@@ -378,6 +456,40 @@ const AtencionDetailPage = () => {
                             </form>
                         )}
 
+                        {/* Formulario de evolución docente (nombre autor) */}
+                        {showEvolucionForm && isDocente && (
+                            <form
+                                onSubmit={(e) => { e.preventDefault(); handleCrearEvolucion(evolucionAutor); }}
+                                className="mb-6 p-4 bg-green-50 rounded-lg border border-green-200"
+                            >
+                                <label className="block text-sm font-medium text-gray-700 mb-1 font-worksans">
+                                    Nombre del autor (opcional)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={evolucionAutor}
+                                    onChange={(e) => setEvolucionAutor(e.target.value)}
+                                    className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-green-500 focus:border-green-500"
+                                    placeholder={`Ej: Dr. González (Urgenciólogo) — vacío usa "${user?.first_name} ${user?.last_name}"`}
+                                />
+                                <div className="flex justify-end gap-2 mt-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => { setShowEvolucionForm(false); setEvolucionAutor(''); }}
+                                        className="px-3 py-1.5 text-sm text-gray-600 hover:text-gray-800 font-worksans"
+                                    >
+                                        Cancelar
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className="px-4 py-1.5 bg-green-500 text-white rounded-md hover:bg-green-600 font-worksans text-sm font-medium"
+                                    >
+                                        Crear Evolución
+                                    </button>
+                                </div>
+                            </form>
+                        )}
+
                         {evolucionesLoading ? (
                             <div className="flex items-center justify-center py-8">
                                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-aqua"></div>
@@ -406,7 +518,7 @@ const AtencionDetailPage = () => {
                                                         Viñeta #{(item.data as Vineta).numero}
                                                     </span>
                                                     <span className="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-                                                        Docente
+                                                        {(item.data as Vineta).creada_por_nombre || 'Docente'}
                                                     </span>
                                                 </div>
                                                 <p className="text-gray-800 font-worksans text-sm whitespace-pre-wrap">
@@ -429,12 +541,9 @@ const AtencionDetailPage = () => {
                                                                 Evolución #{(item.data as Evolucion).numero}
                                                             </span>
                                                             <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${(item.data as Evolucion).tipo_autor === 'DOCENTE' ? 'bg-purple-100 text-purple-800' : 'bg-green-100 text-green-800'}`}>
-                                                                {(item.data as Evolucion).tipo_autor}
+                                                                {(item.data as Evolucion).nombre_autor}
                                                             </span>
                                                         </div>
-                                                        <p className="text-sm text-gray-600 font-worksans">
-                                                            Autor: {(item.data as Evolucion).nombre_autor}
-                                                        </p>
                                                         <p className="text-xs text-gray-500 font-worksans">
                                                             {new Date((item.data as Evolucion).fecha_creacion).toLocaleString('es-CL')}
                                                         </p>

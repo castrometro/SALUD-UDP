@@ -47,6 +47,11 @@ class CasoClinicoViewSet(viewsets.ModelViewSet):
                 db_models.Q(titulo__icontains=search) |
                 db_models.Q(descripcion__icontains=search)
             )
+
+        tema = self.request.query_params.get('tema', '').strip()
+        if tema:
+            queryset = queryset.filter(tema__iexact=tema)
+
         return queryset
 
     def get_permissions(self):
@@ -81,6 +86,18 @@ class CasoClinicoViewSet(viewsets.ModelViewSet):
 
         serializer = AtencionClinicaSerializer(atenciones, many=True, context={'request': request})
         return Response(serializer.data)
+
+    @action(detail=False, methods=['get'])
+    def temas(self, request):
+        """Lista los temas (unidades curriculares) únicos existentes."""
+        temas = (
+            CasoClinico.objects
+            .exclude(tema='')
+            .values_list('tema', flat=True)
+            .distinct()
+            .order_by('tema')
+        )
+        return Response(list(temas))
 
 
 # ──────────────────────────────────────────────
@@ -210,7 +227,7 @@ class AtencionEstudianteViewSet(viewsets.ModelViewSet):
         if estudiante_id and user.role in (User.Role.ADMIN, User.Role.DOCENTE):
             queryset = queryset.filter(estudiante_id=estudiante_id)
 
-        return queryset
+        return queryset.order_by('-fecha_asignacion')
 
     def get_permissions(self):
         if self.action in ['create', 'destroy']:
@@ -332,7 +349,7 @@ class EvolucionViewSet(viewsets.ModelViewSet):
     """
     serializer_class = EvolucionSerializer
     permission_classes = [permissions.IsAuthenticated]
-    http_method_names = ['get', 'patch', 'head', 'options']
+    http_method_names = ['get', 'post', 'patch', 'head', 'options']
 
     def get_queryset(self):
         user = self.request.user
@@ -357,6 +374,45 @@ class EvolucionViewSet(viewsets.ModelViewSet):
         if self.action in ['partial_update']:
             return [permissions.IsAuthenticated(), IsOwnerOrDocenteOrAdmin()]
         return [permissions.IsAuthenticated()]
+
+    def partial_update(self, request, *args, **kwargs):
+        evolucion = self.get_object()
+        user = request.user
+        # Bloquear edición si la evolución fue entregada
+        if user.role == User.Role.ESTUDIANTE and evolucion.entregada:
+            return Response(
+                {'detail': 'Esta evolución ya fue entregada. No puedes editarla.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        return super().partial_update(request, *args, **kwargs)
+
+    @action(detail=True, methods=['post'])
+    def entregar(self, request, pk=None):
+        """
+        POST /api/fichas/evoluciones/{id}/entregar/
+        El estudiante marca como entregada esta evolución. Irreversible para el estudiante.
+        """
+        evolucion = self.get_object()
+        user = request.user
+
+        if user.role == User.Role.ESTUDIANTE:
+            if evolucion.creado_por != user:
+                return Response(
+                    {'detail': 'No puedes entregar una evolución que no es tuya.'},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+
+        if evolucion.entregada:
+            return Response(
+                {'detail': 'Esta evolución ya fue entregada.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        evolucion.entregada = True
+        evolucion.save(update_fields=['entregada'])
+        return Response(
+            EvolucionSerializer(evolucion, context={'request': request}).data
+        )
 
 
 # ──────────────────────────────────────────────

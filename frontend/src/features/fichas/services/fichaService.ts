@@ -6,10 +6,16 @@ import { PaginatedResponse } from '@/types/common';
 // Casos Clínicos
 // ──────────────────────────────────────────────
 
-export const getCasosClinicos = async (page: number = 1, pageSize: number = 10, search?: string): Promise<PaginatedResponse<CasoClinico>> => {
+export const getCasosClinicos = async (page: number = 1, pageSize: number = 10, search?: string, tema?: string): Promise<PaginatedResponse<CasoClinico>> => {
     const params: Record<string, string | number> = { page, page_size: pageSize };
     if (search) params.search = search;
+    if (tema) params.tema = tema;
     const response = await api.get<PaginatedResponse<CasoClinico>>('/fichas/casos-clinicos/', { params });
+    return response.data;
+};
+
+export const getTemasCasosClinicos = async (): Promise<string[]> => {
+    const response = await api.get<string[]>('/fichas/casos-clinicos/temas/');
     return response.data;
 };
 
@@ -101,6 +107,13 @@ export const getAtencionesEstudiante = async (page: number = 1, pageSize: number
 
 export const getAtencionEstudiante = async (id: number): Promise<AtencionEstudiante> => {
     const response = await api.get<AtencionEstudiante>(`/fichas/atenciones-estudiantes/${id}/`);
+    return response.data;
+};
+
+export const entregarEvolucion = async (evolucionId: number): Promise<Evolucion> => {
+    const response = await api.post<Evolucion>(
+        `/fichas/evoluciones/${evolucionId}/entregar/`
+    );
     return response.data;
 };
 
