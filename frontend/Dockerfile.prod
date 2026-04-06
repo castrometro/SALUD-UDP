@@ -1,0 +1,19 @@
+# Multi-stage build para Frontend
+# Stage 1: Build
+FROM node:20-alpine AS builder
+
+WORKDIR /app
+
+COPY package.json package-lock.json* ./
+RUN npm ci
+
+COPY . .
+RUN npm run build
+
+# Stage 2: Copiar solo los archivos generados a un volumen
+FROM alpine:latest
+
+COPY --from=builder /app/dist /app/dist
+
+# Este contenedor solo existe para compartir el volumen con Nginx
+CMD ["echo", "Frontend build complete"]
