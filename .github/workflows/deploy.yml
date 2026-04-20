@@ -1,13 +1,12 @@
-name: Deploy to Production
+name: Deploy to Production (deshabilitado)
 
 on:
-  push:
-    branches:
-      - production
+  workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: [self-hosted, production]
+    if: false
+    runs-on: ubuntu-latest
     steps:
-      - name: Deploy
-        run: /var/www/dev/deploy.sh
+      - name: Workflow deshabilitado
+        run: echo "El despliegue automático por runner self-hosted fue deshabilitado."
