@@ -49,20 +49,17 @@ services:
     networks:
       - clinica_net
 
-  # --- Nginx (SSL + static files + reverse proxy) ---
+  # --- Nginx (HTTP + static files + reverse proxy) ---
   nginx:
     image: nginx:alpine
     container_name: clinica_prod_nginx
     restart: always
     ports:
       - "80:80"
-      - "443:443"
     volumes:
       - ./nginx/prod.conf:/etc/nginx/conf.d/default.conf:ro
       - static_files:/var/www/static:ro
       - frontend_build:/var/www/frontend:ro
-      - /etc/ssl/certs/site.crt:/etc/ssl/certs/site.crt:ro
-      - /etc/ssl/private/site.key:/etc/ssl/private/site.key:ro
     depends_on:
       - backend
       - frontend_build
