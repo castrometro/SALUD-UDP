@@ -13,6 +13,8 @@
 
 ## Arquitectura
 
+> **Documentación vigente:** para el mapa de documentos, sus estados y la guía de arquitectura/runtime, empezá por el [índice de documentación](Docs/documentacion%20del%20sistema/INDEX.md).
+
 El proyecto implementa un **Monolito Modular** con 3 contenedores Docker:
 
 ```
@@ -151,15 +153,11 @@ SALUD-UDP/
 │       │   └── estudiantes/    # Pages, components y services de estudiantes
 │       └── utils/rut.ts        # Validación de RUT en frontend
 │
-├── nginx/                      # Config Nginx (solo producción futura)
-│   └── default.conf
+├── nginx/                      # Configuración Nginx
+│   ├── default.conf
+│   └── prod.conf               # Entrada HTTP de producción
 │
-└── Docs/                       # Documentación del sistema
-    └── documentacion del sistema/
-        ├── workflows.md
-        ├── REQUERIMIENTOS_FICHAS_SIMULACION.md
-        ├── backend/apps/       # Docs por app Django
-        └── frontend/features/  # Docs por feature React
+└── Docs/                       # Documentación del sistema; índice enlazado arriba
 ```
 
 ## Variables de Entorno
